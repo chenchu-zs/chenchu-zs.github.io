@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>2017-2022 重新捡起博客</title>
+    <url>/2022/02/20/2017-2022/</url>
+    <content><![CDATA[<p>这是一篇交了学费的总结反思文，顺便回顾一下这五年。</p>
+<span id="more"></span>
+<p>作为一名程序员，一个存放自己知识和笔记的地方实在太重要了。最早自己搭建博客，后来因为总是随手记一些零零碎碎的知识点，对自己的博客有质量洁癖却没时间完整的总结成一个满意的系列，导致草稿箱里堆了很多，更新到网页上去的却很少。最后干脆放弃转而使用在线云笔记，从印象笔记换到为知笔记又用到语雀。几年下来笔记记了不少，但是大部分都很乱。想系统的回顾整理一下都无从下手。再加上因为工作了之后，公司限制员工使用在线笔记，总是被迫转移阵地。越来越觉得，写博客还是很重要的。</p>
+<p>第一次搭建自己的博客是在2017年，当时买了云服务器和域名并使用hexo搭建的。过了一年之后域名失效，转而使用github page来托管。后来在转向使用在线云笔记的时候，服务器就放在那里吃灰了。某天忘记续费直接被回收，hexo仓库丢失无法更新，于是博客也彻底的被我弃用了，但既有博客还能继续访问。不巧的是前段时间心血来潮给github改了用户名，结果导致博客彻底挂了。被迫走上交学费挽救之路。在这里记录一下苦逼的挽救过程。</p>
+<h1 id="找回github-page"><a href="#找回github-page" class="headerlink" title="找回github page"></a>找回github page</h1><p>首先我第一个想到的是把github用户名改回去先挽救我的博客页面，但github直接禁止改回历史名，只能另外想办法。<br>其实这个问题也很简单，用户名变了，导致github的page的域名也跟着变了，然而仓库里的html使用的还是老域名。所以只要把这些html的域名批量修改了就好。过程：git clone -&gt; sed 批量修改 -&gt; git commit 然后push回去。再次打开，博客页面可以访问了~ </p>
+<h1 id="根据html重新生成markdown"><a href="#根据html重新生成markdown" class="headerlink" title="根据html重新生成markdown"></a>根据html重新生成markdown</h1><p>链接能访问后，博客的静态页面算是找回了，但是本身的markdown记录还是丢失的状态，因此需要重新生成一份。</p>
+<ul>
+<li>方法一：利用工具将html文件转成markdown格式，在github上找到了一个好用的工具: <a href="https://mixmark-io.github.io/turndown/">turndown</a></li>
+<li>方法二：利用语雀的格式识别和导出markdown的功能。</li>
+</ul>
+<p>最终我用的是方法二，因为方法一的html页面上带有很多hexo的信息，转换后冗余信息太多，另外无法获取正确的图片和LaTeX公式。</p>
+<h1 id="重新搭建HEXO环境"><a href="#重新搭建HEXO环境" class="headerlink" title="重新搭建HEXO环境"></a>重新搭建HEXO环境</h1><p>之前搭的时候没有记录，好多步骤都忘了，现在重走一遍过程顺便保存一下搭建记录，以后说不定还用得到&#x3D;。&#x3D;</p>
+<h2 id="安装nodejs"><a href="#安装nodejs" class="headerlink" title="安装nodejs"></a>安装nodejs</h2><p>由于我是在个人电脑上使用了wsl，安装nodejs参考微软的<a href="https://docs.microsoft.com/zh-cn/windows/dev-environment/javascript/nodejs-on-wsl">官方文档</a></p>
+<h2 id="安装hexo并初始化博客"><a href="#安装hexo并初始化博客" class="headerlink" title="安装hexo并初始化博客"></a>安装hexo并初始化博客</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br><span class="line">hexo init blog</span><br><span class="line">cd blog</span><br><span class="line">npm install</span><br><span class="line">hexo server</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>踩坑：需要关闭命令行梯子代理，否则会出现问题</p>
+</blockquote>
+<p>以上步骤之后，会在<a href="http://localhost:4000/">http://localhost:4000/</a> 页面显示一个hello world的示例博客页</p>
+<h2 id="主题配置"><a href="#主题配置" class="headerlink" title="主题配置"></a>主题配置</h2><p>默认的主题不好看，之前用的Next-mist主题，按照以下步骤配置：</p>
+<ol>
+<li><code>npm install hexo-theme-next</code></li>
+<li>在<code>__config.yml</code>文件里修改<code>theme: next</code></li>
+<li>配置mist模式：在next的<code>__config.yml</code>里修改 <code>scheme: Mist</code></li>
+<li>配置页面显示选项 (修改next的__config.yml）：<ul>
+<li>菜单选项：<code>menu</code>，打开<code>home/tag/archives</code>字段</li>
+<li>代码主题：<code>codeblock</code>的字段，选择<code>atom-one-dark</code>主题</li>
+<li>配置搜索博客的功能：参考<a href="https://theme-next.js.org/docs/third-party-services/search-services">local search文档</a></li>
+<li>侧栏设置：<code>position: right</code></li>
+<li>头像设置：替换<code>/images/avatar.gif</code>，修改avatar字段</li>
+<li>github设置：<code>github_banner</code>, enable设为true</li>
+<li>网站logo设置：修改favicon的small和medium为自己的logo：<code>/images/logo.ico</code></li>
+<li>字数显示和阅读时长：在config.yml中搜索<code>wordcount</code>，然后按照文档修改</li>
+</ul>
+</li>
+</ol>
+<h2 id="站点信息配置"><a href="#站点信息配置" class="headerlink" title="站点信息配置"></a>站点信息配置</h2><ol>
+<li><p>整体信息配置：修改__config.yml的以下字段：</p>
+ <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">title: chenchu.zs<span class="number">&#x27;</span>s blog</span><br><span class="line">subtitle: <span class="string">&#x27;仓鼠君的瓜子库&#x27;</span></span><br><span class="line">description: <span class="string">&#x27;积跬步以致千里&#x27;</span></span><br><span class="line">keywords:</span><br><span class="line">author: Zhang Shu</span><br><span class="line">language: zh-CN</span><br><span class="line">timezone: <span class="string">&#x27;&#x27;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置标签和分类页面.</p>
+ <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">hexo new page tags</span><br><span class="line">hexo new page categories</span><br></pre></td></tr></table></figure>
+<p>然后切换到对应的目录，编辑<code>index.md</code>。<br>示例，分类页面，切换目录到<code>source/categories</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: categories</span><br><span class="line">date: <span class="number">2022</span><span class="number">-02</span><span class="number">-27</span> <span class="number">13</span>:<span class="number">06</span>:<span class="number">46</span></span><br><span class="line">type: categories</span><br><span class="line">---</span><br><span class="line">杂七杂八</span><br><span class="line">算法与刷题</span><br></pre></td></tr></table></figure></li>
+<li><p>TODO：配置自己的首页</p>
+</li>
+</ol>
+<h1 id="博客文章迁移"><a href="#博客文章迁移" class="headerlink" title="博客文章迁移"></a>博客文章迁移</h1><h2 id="在hexo中添加博客"><a href="#在hexo中添加博客" class="headerlink" title="在hexo中添加博客"></a>在hexo中添加博客</h2><p>新建博客的命令如下：会在<code>source/_post</code>目录下生成一个相关的markdown文件。将之前所有的博客都用这种方式重新创建一遍</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">hexo new &#x27;&lt;post_title&gt;&#x27;</span><br></pre></td></tr></table></figure>
+
+<h2 id="博文基本样式配置"><a href="#博文基本样式配置" class="headerlink" title="博文基本样式配置"></a>博文基本样式配置</h2><p>博文的markdown文件中需要做一些修改才可以展示一些前端的信息，详细见文档：<a href="https://hexo.io/docs/front-matter">https://hexo.io/docs/front-matter</a>。基本配置如下：</p>
+<ol>
+<li><p>显示文档标题、日期、tag、分类等信息。在md文件最开始添加以下配置：</p>
+<figure class="highlight markdown"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: <span class="language-xml"><span class="tag">&lt;<span class="name">post_title</span>&gt;</span></span></span><br><span class="line">date: 2022-02-20 13:21:52</span><br><span class="line"><span class="section">tags:</span></span><br><span class="line"><span class="section">---</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置显示博客阅读全文：在文章中任意位置添加<code>&lt;!-- more --&gt;</code></p>
+</li>
+<li><p>博客置顶</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">npm uninstall hexo-generator-index --save</span><br><span class="line">npm install hexo-generator-index-pin-top --save</span><br></pre></td></tr></table></figure>
+<p>然后在文章的<code>front-matter</code>中设置<code>top: true</code>。这样文章就会置顶显示了，不过没有任何置顶标识，如果需要配置样式还需要修改如下：找到<code>/themes/next/layout/_macro/</code>里关于post的文件，在<code>&lt;div class=&quot;post-meta&quot;&gt;</code>的开始插入以下代码：</p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line">&#123;%- if post.top %&#125;</span><br><span class="line">  <span class="tag">&lt;<span class="name">font</span> <span class="attr">color</span>=<span class="string">D81E06</span>&gt;</span>[置顶] <span class="tag">&lt;/<span class="name">font</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">&quot;post-meta-divider&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></span><br><span class="line">&#123;%- endif %&#125;</span><br></pre></td></tr></table></figure>
+<p>效果展示如下：</p>
+<img src="1.jpg" width="50%" height="50%"></li>
+</ol>
+<h2 id="图片正确展示"><a href="#图片正确展示" class="headerlink" title="图片正确展示"></a>图片正确展示</h2><p>参考文档<a href="https://hexo.io/zh-cn/docs/asset-folders.html">https://hexo.io/zh-cn/docs/asset-folders.html</a></p>
+<ol>
+<li>设置<code>post_asset_folder: true</code>，开启后<code>hexo new &lt;page&gt;</code>会在md的目录生成一个该博客的同名目录。将对应博客的资源放到这个路径中。</li>
+<li>markdown文件会出现hexo generate时候图片路径显示不正确的问题，注意文档中的这个例子，在写路径的时候要忽略资源文件夹的名称。<blockquote>
+<p>eg：<code>image.jpg</code> is located at <code>/2020/01/02/foo/image.jpg</code>, meaning it is an asset image of <code>/2020/01/02/foo/</code> post, <code>![](image.jpg)</code> will be rendered as <code>&lt;img src=&quot;/2020/01/02/foo/image.jpg&quot;&gt;</code>.</p>
+</blockquote>
+</li>
+</ol>
+<h2 id="公式正确展示"><a href="#公式正确展示" class="headerlink" title="公式正确展示"></a>公式正确展示</h2><p>网上有好多教程，但是我实际操作下来并没有那么麻烦，无需卸载和重装什么东西，只需要在<code>next/_config.yml</code>里找到math参数，把<code>every_page</code>设为<code>true</code>, 选择渲染引擎为<code>mathjax</code>即可。</p>
+<h1 id="博客部署"><a href="#博客部署" class="headerlink" title="博客部署"></a>博客部署</h1><h2 id="生成静态页面并部署"><a href="#生成静态页面并部署" class="headerlink" title="生成静态页面并部署"></a>生成静态页面并部署</h2><p>命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
+<h2 id="部署到github"><a href="#部署到github" class="headerlink" title="部署到github"></a>部署到github</h2><h1 id="五年回顾"><a href="#五年回顾" class="headerlink" title="五年回顾"></a>五年回顾</h1>]]></content>
+      <categories>
+        <category>杂七杂八</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>vim配置</title>
+    <url>/2021/05/31/vim/</url>
+    <content><![CDATA[<p>稍微调教一下vim</p>
+<span id="more"></span>
+<p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
+<p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
+
+<p>vi .vim_runtime&#x2F;vimrcs&#x2F;basic.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
+
+<p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>linux配置相关</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Docker学习笔记——容器container</title>
+    <url>/2021/03/14/docker-container/</url>
+    <content><![CDATA[<h1 id="查看本机已有的容器"><a href="#查看本机已有的容器" class="headerlink" title="查看本机已有的容器"></a>查看本机已有的容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看本机所有的容器</span></span><br><span class="line">docker ps -a</span><br><span class="line"><span class="comment"># 查看本机正在运行的容器</span></span><br><span class="line">docker ps</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h1 id="创建容器"><a href="#创建容器" class="headerlink" title="创建容器"></a>创建容器</h1><p>容器是从镜像中创建的，相当于一个镜像的实例。<br>使用命令<code>docker run</code>创建容器，创建时有很多不同的选项参数：</p>
+<ul>
+<li><code>-it</code>: 表示进入容器</li>
+<li><code>-d</code>: 表示后台启动，不会进入容器</li>
+<li><code>--name</code>: 给启动的容器命名，建议加上这个参数，方便自己记忆调试的是哪个容器，不然系统会以随机的方式命名。</li>
+<li><code>--network=host</code>: 使用宿主机的网络</li>
+<li><code>--gpus=all</code>: 启动GPU环境</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 进入到docker里面执行</span></span><br><span class="line">docker run -it &lt;images&gt;:&lt;tag&gt; /bin/bash</span><br><span class="line"><span class="comment"># 指定可见的宿主机的路径</span></span><br><span class="line">docker run -it -v &lt;local_path&gt;:/root/&lt;docker_path&gt; &lt;images&gt;:&lt;tag&gt; /bin/bash</span><br><span class="line"><span class="comment"># 后台启动，不会进入容器</span></span><br><span class="line">docker run -d --name &lt;container_desc&gt; &lt;images&gt;:&lt;tag&gt;</span><br><span class="line"><span class="comment"># 启动时传入环境变量</span></span><br><span class="line">docker run -e</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>备注：<br>每次<code>docker run</code>会创建一个不同的容器。如果不kill容器，则容器会逐渐增多，比如下面这样：<img src="/2021/03/14/docker-container/1.png" alt="image.png">因此除了第一次启动容器，不建议以这种方式来启动。</p>
+</blockquote>
+<h1 id="进入容器"><a href="#进入容器" class="headerlink" title="进入容器"></a>进入容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker <span class="built_in">exec</span> -it  &lt;container <span class="built_in">id</span>&gt; /bin/bash</span><br></pre></td></tr></table></figure>
+
+<h1 id="启动和退出容器"><a href="#启动和退出容器" class="headerlink" title="启动和退出容器"></a>启动和退出容器</h1><p>在进入容器前必须先启动容器，在删除容器之前也必须要退出容器。容器是否启动还是退出可以通过<code>docker ps -a</code>来查看容器的状态。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动容器</span></span><br><span class="line">docker start  &lt;container <span class="built_in">id</span>&gt;</span><br><span class="line"><span class="comment"># 退出容器</span></span><br><span class="line">docker stop  &lt;container <span class="built_in">id</span>&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="删除容器"><a href="#删除容器" class="headerlink" title="删除容器"></a>删除容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker <span class="built_in">rm</span> &lt;container_ID&gt;</span><br></pre></td></tr></table></figure>]]></content>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Docker学习笔记——镜像image</title>
+    <url>/2021/03/13/docker-image/</url>
+    <content><![CDATA[<h1 id="查看已有的镜像信息"><a href="#查看已有的镜像信息" class="headerlink" title="查看已有的镜像信息"></a>查看已有的镜像信息</h1><p>使用命令<code>docker images</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker images</span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">php                 latest              fe1a2c2228f4        2 days ago          364 MB</span><br><span class="line">mongo               latest              87bde25ffc68        2 days ago          326.7 MB</span><br><span class="line">ubuntu              latest              42118e3df429        9 days ago          124.8 MB</span><br><span class="line">redis               latest              4465e4bcad80        6 weeks ago         185.7 MB</span><br><span class="line">nginx               latest              0d409d33b27e        8 weeks ago         182.8 MB</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h1 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h1><p>删除镜像之前要先删掉根据镜像建立的容器，然后才可以删除对应的镜像。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 删除指定id的镜像</span></span><br><span class="line">docker rmi &lt;image <span class="built_in">id</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除当前机器上的无用镜像(名称或标签为none)</span></span><br><span class="line">sudo docker images | grep <span class="string">&#x27;&lt;none&gt;&#x27;</span> | awk <span class="string">&#x27;&#123;print $3&#125;&#x27;</span>| xargs sudo docker rmi -f </span><br></pre></td></tr></table></figure>
+<h1 id="下载远程镜像"><a href="#下载远程镜像" class="headerlink" title="下载远程镜像"></a>下载远程镜像</h1><p>命令：<code>docker pull NAME[:TAG]</code></p>
+<blockquote>
+<p>不指定tag的时候默认使用:latest</p>
+</blockquote>
+<p><strong>提高下载速度的技巧</strong><br>国外的docker下载速度太慢，可以找国内阿里云的镜像之类的。<br>登录阿里云账号：在类似的路径下搜索<a href="https://cr.console.aliyun.com/cn-beijing/instances/images">https://cr.console.aliyun.com/cn-beijing/instances/images</a>，比如<br><img src="/2021/03/13/docker-image/1.png" alt="image.png"></p>
+<p>也可以配置docker加速器：<a href="https://blog.csdn.net/liu865033503/article/details/95936640">https://blog.csdn.net/liu865033503/article/details/95936640</a></p>
+<h1 id="上传镜像"><a href="#上传镜像" class="headerlink" title="上传镜像"></a>上传镜像</h1><p>命令：<code>docker push NAME[:TAG]</code></p>
+]]></content>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Docker学习笔记——环境配置</title>
+    <url>/2021/03/12/docker-env/</url>
+    <content><![CDATA[<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>使用yum方式安装，但是首先要保证有centos的yum源，然后<code>yum install docker-ce</code></p>
+<span id="more"></span>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装centos的yum源</span></span><br><span class="line">wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装docker</span></span><br><span class="line">sudo yum install docker-ce</span><br></pre></td></tr></table></figure>
+<h1 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装完之后启动docker</span></span><br><span class="line">sudo systemctl start docker</span><br></pre></td></tr></table></figure>
+<p>踩坑1：启动docker的时候失败，<code>sudo dockerd --debug</code>查找原因<br>原因是没有network，解决方法:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo ip <span class="built_in">link</span> add name docker0 <span class="built_in">type</span> bridge</span><br><span class="line">sudo ip addr add dev docker0 172.17.0.1/16</span><br></pre></td></tr></table></figure>
+<p>踩坑2：需要重启docker，找不到socket，更改了本机lib里的docker.socket，参考这个图中的方法<br><img src="/2021/03/12/docker-env/1.png" alt="image.png"></p>
+<h1 id="路径配置"><a href="#路径配置" class="headerlink" title="路径配置"></a>路径配置</h1><p>系统默认会把docker的镜像放在<code>/var/lib/docker</code>的目录下，有时候这个目录的磁盘空间往往不会很大，当docker镜像比较多的时候，会导致磁盘空间不足，一个解决办法是将docker路径重定向到自己家目录下的本地空间，操作方式如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl stop docker</span><br><span class="line">ps aux | grep -i docker | grep -v grep   	<span class="comment">#查看是否完全stop了</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 移动到新的路径</span></span><br><span class="line"><span class="built_in">mv</span> /var/lib/docker  /new/path</span><br><span class="line"><span class="built_in">ln</span> -s /new/path /var/lib/docker </span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启docker</span></span><br><span class="line">systemctl start docker</span><br></pre></td></tr></table></figure>
+<h1 id="sudo权限"><a href="#sudo权限" class="headerlink" title="sudo权限"></a>sudo权限</h1><p>docker使用unix socket进行通讯，但是unix socket属于root用户，但是普通用户需要使用sudo才能开启root权限，但是普通的操作并没有root权限。可通过以下操作使docker拥有sudo权限.</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo groupadd docker</span><br><span class="line">sudo usermod -aG docker <span class="variable">$USER</span></span><br></pre></td></tr></table></figure>
+<p>如果是虚拟机，则需要reboot机器才能生效<br>如果无法reboot，那通过<code>newgrp docker</code>，使之在当前目录生效</p>
+<p>开启了sudo权限之后，可以通过vscode远程访问docker容器</p>
+]]></content>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法笔记——并查集</title>
+    <url>/2017/02/28/union-find/</url>
+    <content><![CDATA[<p>刷题碰到这种问题不止一次了，总是写的磕磕绊绊。是时候总结一下了。</p>
+<span id="more"></span>
+<h1 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>并查集: 来自于——并(union)、查(find)、集(set)，是一种维护集合的数据结构。支持两种操作：</p>
+<ul>
+<li>查询操作<code>find()</code>: 判断两个元素是否在一个集合中。</li>
+<li>合并操作<code>union()</code>: 合并两个集合。</li>
+</ul>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>并查集维护的集合本质上是<strong>树形结构</strong>，使用数组方式实现的。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> pre[N];  <span class="comment">//pre[i]表示元素i的父节点的下标</span></span><br></pre></td></tr></table></figure>
+<p>以这种父亲关系来表示元素所属的集合，图示如下：<br><img src="/2017/02/28/union-find/1.jpg" alt="image.png"></p>
+<p>如果<code>pre[i] == i</code>,说明元素i为该集合的根节点，同时也是<strong>所属集合的标识</strong> 。</p>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>一开始的每个元素都是独立的集合。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    pre[i] = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="find操作"><a href="#find操作" class="headerlink" title="find操作"></a>find操作</h1><p>思路:<br>判断两个元素是否在同一个集合 ——&gt; 判断两个元素是否在一棵树上 ——&gt; 判断两个元素所在树的根节点是否相等。<br>接下来就是如何查找元素的集合的根节点的问题了，这个也很简单，反复寻找父节点直至<code>pre[i] == i</code>即可。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="union操作"><a href="#union操作" class="headerlink" title="union操作"></a>union操作</h1><p>合并元素a和元素b所在的集合。<br>思路：</p>
+<ol>
+<li>对于a和b两个元素，分别找到其根节点ra和rb。</li>
+<li>如果<code>ra == rb</code>，不做任何操作。</li>
+<li>否则，令<code>pre[ra] = rb</code>或者<code>pre[rb] = ra</code>。</li>
+</ol>
+<p><img src="/2017/02/28/union-find/2.jpg" alt="image.png"><br>代码描述：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">union</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ra = <span class="built_in">find</span>(a);</span><br><span class="line">    <span class="type">int</span> rb = <span class="built_in">find</span>(b);</span><br><span class="line">    <span class="keyword">if</span>(ra != rb) &#123;</span><br><span class="line">        pre[ra] = rb;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="路径压缩"><a href="#路径压缩" class="headerlink" title="路径压缩"></a>路径压缩</h1><p>上述查找函数是未经过优化的，在某种极端情况下效率很低。<br>比如：假设一个集合的元素的树形结构是一个链表。这样，当从叶子节点开始寻找根节点时，向上查询经过了集合里的每个节点，这样的效率太过低下。<br>因此，可以在找到根节点后，对此集合的元素做一次路径压缩。把经过路径上所有元素的父节点都指向根节点。如图所示：<br><img src="/2017/02/28/union-find/3.jpg" alt="image.png"></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> v = x;</span><br><span class="line">    <span class="comment">// 第一次遍历，找到根节点</span></span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];    </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 再遍历一次路径，进行路径压缩  </span></span><br><span class="line">    <span class="keyword">while</span>(pre[v] != v) &#123;</span><br><span class="line">        <span class="type">int</span> tmp = v;</span><br><span class="line">        v = pre[v];</span><br><span class="line">        pre[tmp] = x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>递归版的写法：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x == pre[x]) &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">int</span> F = find[pre[x]];</span><br><span class="line">        pre[x] = F;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>算法与刷题</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>正则表达式</title>
+    <url>/2017/02/06/regex/</url>
+    <content><![CDATA[<p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
+<span id="more"></span>
+<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
+<li><code>^</code>: 匹配字符串的开头</li>
+<li><code>$</code>: 匹配字符串的结尾</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
+
+<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
+<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
+<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
+
+<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
+<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
+<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
+</ul>
+<p>大写字母表示“非”，如：</p>
+<ul>
+<li><code>\D</code>: 匹配非数字</li>
+<li><code>\W</code>：匹配非单词字符</li>
+</ul>
+<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
+<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
+<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
+<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
+<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
+<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
+
+<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
+<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
+<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
+<li><code>.</code>：匹配单个的任意字符</li>
+<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
+<li><code>()</code>: 匹配子串</li>
+</ul>
+]]></content>
+      <categories>
+        <category>python</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>算法总结之——排列组合问题</title>
+    <url>/2017/01/30/permutation/</url>
+    <content><![CDATA[<p>今天刷题碰到了需要实现全排列的问题，乍一看觉得还好，c++ stl里有<code>next_permutation</code>可以实现。然后回头想了一下，如果换成c要怎么写？想了好久居然没想出来-。-<br>因此狠狠的反思了一下，这和以前的自己有什么区别，写快排直接调sort，写堆排直接调优先队列，碰到需要修改一趟排序过程的题目，瞬间无从下手。太过依赖某一类语言的接口，反而忽略了对算法的实现，舍本逐末了。<br>刷题是为了加强实现算法的能力，而不是为了简单的完成任务。因此，总结一下全排列，警示下自己不要太浮躁。编程能力全凭不断积累，要坚持踏踏实实的修行啊。<br>(更新：又碰到了全组合的问题，一并总结了。)</p>
+<span id="more"></span>
+<h1 id="全排列问题"><a href="#全排列问题" class="headerlink" title="全排列问题"></a>全排列问题</h1><h2 id="递归求解（交换法）"><a href="#递归求解（交换法）" class="headerlink" title="递归求解（交换法）"></a>递归求解（交换法）</h2><h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><ol>
+<li>将序列$S$中第一个元素分别与后面每一个元素交换。这样就得到了n个序列，其中每个序列的首元素都不一样</li>
+<li>对$S[2]-S[n]$ 构成的子序列做递归。直到子序列中只有一个元素，输出整个序列$S$</li>
+<li>还原步骤1中交换的两元素</li>
+</ol>
+<h3 id="时间复杂度"><a href="#时间复杂度" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>不难看出这种解法的时间复杂度为$O(n!)$</p>
+<h3 id="代码描述"><a href="#代码描述" class="headerlink" title="代码描述"></a>代码描述</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(<span class="type">int</span> &amp;a, <span class="type">int</span> &amp;b)</span>   </span>&#123;</span><br><span class="line">    <span class="type">int</span> tmp = a;</span><br><span class="line">    a = b;</span><br><span class="line">    b = tmp;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func_perm</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;s, <span class="type">int</span> len, <span class="type">int</span> start)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (start == len - <span class="number">1</span>) &#123;              <span class="comment">//处理到最后一个元素，输出一个排列</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i) &#123;</span><br><span class="line">            cout &lt;&lt; s[i] &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = start; i &lt; len; ++i) &#123;</span><br><span class="line">        <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//交换首元素与后面的元素</span></span><br><span class="line">        <span class="built_in">func_perm</span>(s, len, start + <span class="number">1</span>);</span><br><span class="line">        <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//恢复</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector &lt;<span class="type">int</span>&gt; s;</span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; num) &#123;</span><br><span class="line">        s.<span class="built_in">push_back</span>(num);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">func_perm</span>(s,s.<span class="built_in">size</span>(),<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="关于去重"><a href="#关于去重" class="headerlink" title="关于去重"></a>关于去重</h3><p>用递归方式求解对于重复的判断是，序列中首部元素仅与未重复出现过的元素交换，即<br><strong>当第i个数与第j个数交换时，要求[i,j)中没有与第j个数相等的数</strong><br>因此代码中仅需加上对重复的判断即可。实现如下：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(<span class="type">int</span> &amp;a, <span class="type">int</span> &amp;b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> tmp = a;</span><br><span class="line">    a = b;</span><br><span class="line">    b = tmp;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func_perm</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;s, <span class="type">int</span> len, <span class="type">int</span> start)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (start == len - <span class="number">1</span>) &#123;                <span class="comment">//处理到最后一个元素，输出一个排列</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i)</span><br><span class="line">            cout &lt;&lt; s[i] &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = start; i &lt; len; ++i) &#123;</span><br><span class="line">        <span class="type">bool</span> flag = <span class="literal">true</span>;       <span class="comment">//没有重复的话就是true</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = start; j &lt; i; ++j) &#123;      <span class="comment">//去重的判断</span></span><br><span class="line">            <span class="keyword">if</span> (s[i] == s[j]) &#123;</span><br><span class="line">                flag = <span class="literal">false</span>;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (flag) &#123;</span><br><span class="line">            <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//交换首元素与后面的元素</span></span><br><span class="line">            <span class="built_in">func_perm</span>(s, len, start + <span class="number">1</span>);</span><br><span class="line">            <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//恢复</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector &lt;<span class="type">int</span>&gt; s;</span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; num) &#123;</span><br><span class="line">        s.<span class="built_in">push_back</span>(num);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">func_perm</span>(s, s.<span class="built_in">size</span>(), <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="非递归求解"><a href="#非递归求解" class="headerlink" title="非递归求解"></a>非递归求解</h2><p>在STL中有两个计算全排列的函数<code>next_permutation</code>和<code>prev_permutation</code>，它们用的都是非递归求解的思路。</p>
+<h3 id="思路-1"><a href="#思路-1" class="headerlink" title="思路"></a>思路</h3><p>假设元素集合$S$中有n个元素，显然$S$中排列的个数为$n!$。给定一个排列，如果我们可以生成它字典序中对应的下一个排列，那么将字典序中最小的排列迭代$n!−1$次，就可以以非递归方式获得全排列。</p>
+<p>如何获得下一个字典序的全排列呢？</p>
+<p><strong>next_permutation</strong>的思路是：</p>
+<ol>
+<li>从序列$S$的尾端向前依次比较相邻两个元素，直至找到 $S_i&lt;S_i+1$ 的元素。（满足此条件一定存在一个排列比当前排列大）</li>
+<li>再次从序列$S$的尾端向前，找到比$S_i$大的第一个元素$S_j$，交换$S_i$和$S_j$</li>
+<li>将S[i+1:N]S[i+1:N] 翻转，输出新的$S$，即为下一个排列</li>
+</ol>
+<p>例如</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[1,2,3,4]--&gt;[1,2,4,3] 	//交换3和4</span><br><span class="line">[1,2,4,3]--&gt;[1,3,2,4]	//a.交换3和2  b.倒转[4,2]</span><br></pre></td></tr></table></figure>
+
+<h3 id="时间复杂度-1"><a href="#时间复杂度-1" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><ul>
+<li>最好情况只需交换一次，复杂度为$O(1)$</li>
+<li>最坏情况需要先将第一个元素换到最右，然后反转右面的所有元素。交换次数为$1+(n-1)&#x2F;2$，复杂度为$O(n)$。</li>
+<li>因为各种排列等可能出现，所以平均复杂度即为$O(n)$。</li>
+</ul>
+<h3 id="代码描述-1"><a href="#代码描述-1" class="headerlink" title="代码描述"></a>代码描述</h3><p>c++代码描述如下：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">next_perm</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;s)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> len = s.<span class="built_in">size</span>();</span><br><span class="line">    <span class="type">int</span> i, j;</span><br><span class="line">    <span class="keyword">for</span> (i = len - <span class="number">2</span>; i &gt;= <span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (s[i] &lt; s[i + <span class="number">1</span>])</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (i &lt; <span class="number">0</span>)              <span class="comment">//说明序列中不存在下一个字典序的排列</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">for</span> (j = len - <span class="number">1</span>; j &gt;= <span class="number">0</span>; --j) &#123;</span><br><span class="line">        <span class="keyword">if</span> (s[j] &gt; s[i])</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">swap</span>(s[i], s[j]);</span><br><span class="line">    <span class="built_in">reverse</span>(s.<span class="built_in">begin</span>() + i + <span class="number">1</span>, s.<span class="built_in">end</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector &lt;<span class="type">int</span>&gt; s;</span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; num)       <span class="comment">//输入待排序列S</span></span><br><span class="line">        s.<span class="built_in">push_back</span>(num);</span><br><span class="line">    <span class="built_in">sort</span>(s.<span class="built_in">begin</span>(), s.<span class="built_in">end</span>());    <span class="comment">//首先找到最小字典序的排列</span></span><br><span class="line">    <span class="type">int</span> len = s.<span class="built_in">size</span>();</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i)   <span class="comment">//输出一个排列</span></span><br><span class="line">            cout &lt;&lt; s[i] &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="built_in">next_perm</span>(s));  <span class="comment">//当还存在下一个排列时，继续迭代</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="全组合问题"><a href="#全组合问题" class="headerlink" title="全组合问题"></a>全组合问题</h1><h2 id="二进制转化法-位图法"><a href="#二进制转化法-位图法" class="headerlink" title="二进制转化法(位图法)"></a>二进制转化法(位图法)</h2><p>这里仅适用于<strong>所有元素都不重复</strong>的情况。</p>
+<h3 id="思路-2"><a href="#思路-2" class="headerlink" title="思路"></a>思路</h3><p>假设一个序列中有n个元素，则对于每个元素都有选或者不选两种情况，共有$2^n−1$种情况(不考虑全不选的情况)，如果分别用0、1表示每个元素选还是不选，则这n个元素的选取情况可以完美对应到$1$ - $2^n-1$的二进制数字上 <code>00..01 - 11..11</code><br>因此，循环$1$ - $2^n-1$，输出对应代表的组合情况即可。</p>
+<h3 id="代码描述-2"><a href="#代码描述-2" class="headerlink" title="代码描述"></a>代码描述</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">combination</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> len = <span class="built_in">pow</span>(<span class="number">2</span>,nums.<span class="built_in">size</span>());       <span class="comment">//总共有2^len-1种可能性，不包括全都不选的为空的可能性</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; len; ++i) &#123;</span><br><span class="line">        vector&lt;<span class="type">int</span>&gt; ans;</span><br><span class="line">        <span class="type">int</span> tmp = i;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; nums.<span class="built_in">size</span>(); ++j) &#123;</span><br><span class="line">            <span class="type">bool</span> choose = tmp &amp; <span class="number">1</span>;</span><br><span class="line">            tmp = tmp &gt;&gt; <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (choose)</span><br><span class="line">                ans.<span class="built_in">push_back</span>(nums[j]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">int</span> l = ans.<span class="built_in">size</span>();</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; l; k++)   <span class="comment">//输出一个组合的结果</span></span><br><span class="line">            cout &lt;&lt; ans[k] &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; nums;</span><br><span class="line">    <span class="type">int</span> input;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; input)</span><br><span class="line">        nums.<span class="built_in">push_back</span>(input);</span><br><span class="line">    <span class="built_in">combination</span>(nums);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="递归法（DFS）"><a href="#递归法（DFS）" class="headerlink" title="递归法（DFS）"></a>递归法（DFS）</h2><p>这种方法比较直观，就是对每个元素分别取选和不选两种策略，然后对下一个元素进行递归。</p>
+<h3 id="代码描述："><a href="#代码描述：" class="headerlink" title="代码描述："></a>代码描述：</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(vector&lt;<span class="type">int</span>&gt; ans)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> len = ans.<span class="built_in">size</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i)</span><br><span class="line">        cout &lt;&lt; ans[i] &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">    cout &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">combination</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; nums, vector&lt;<span class="type">int</span>&gt;&amp; ans, <span class="type">int</span> index, <span class="type">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (index == n)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">print</span>(ans);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ans.<span class="built_in">push_back</span>(nums[index]);                <span class="comment">//对每个元素，选或者不选，两种策略</span></span><br><span class="line">    <span class="built_in">combination</span>(nums, ans, index + <span class="number">1</span>, n);</span><br><span class="line">    ans.<span class="built_in">pop_back</span>();</span><br><span class="line">    <span class="built_in">combination</span>(nums, ans, index + <span class="number">1</span>, n);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; nums;</span><br><span class="line">    <span class="type">int</span> input;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; input)</span><br><span class="line">        nums.<span class="built_in">push_back</span>(input);</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; ans;</span><br><span class="line">    <span class="built_in">combination</span>(nums,ans, <span class="number">0</span>, nums.<span class="built_in">size</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="leetcode相关类型题解"><a href="#leetcode相关类型题解" class="headerlink" title="leetcode相关类型题解"></a>leetcode相关类型题解</h1><p>关于排列问题的：</p>
+<table>
+<thead>
+<tr>
+<th><strong>题号</strong></th>
+<th><strong>题解</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://leetcode.com/problems/permutation">Permutations</a></td>
+<td><a href="https://github.com/chenchu-zs/leetcode/blob/master/046.cpp">046.cpp</a></td>
+</tr>
+<tr>
+<td><a href="https://leetcode.com/problems/permutations-ii">Permutations II</a></td>
+<td><a href="https://github.com/chenchu-zs/leetcode/blob/master/047.cpp">047.cpp(非递归解法)</a><br><a href="http://link/">047_2.cpp(递归解法)</a></td>
+</tr>
+<tr>
+<td><a href="https://leetcode.com/problems/next-permutation">Next Permutation</a></td>
+<td><a href="https://github.com/chenchu-zs/leetcode/blob/master/031.cpp">031.cpp</a></td>
+</tr>
+<tr>
+<td><a href="https://leetcode.com/problems/permutation-sequence">Permutation Sequence</a></td>
+<td><a href="https://github.com/chenchu-zs/leetcode/blob/master/060.cpp">060.cpp</a></td>
+</tr>
+</tbody></table>
+<p>关于组合问题的：</p>
+<table>
+<thead>
+<tr>
+<th><strong>题号</strong></th>
+<th><strong>题解</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://leetcode.com/problems/subsets/">Subsets</a></td>
+<td><a href="https://github.com/chenchu-zs/leetcode/blob/master/078.cpp">078.cpp</a></td>
+</tr>
+</tbody></table>
+<h1 id="未完待续部分"><a href="#未完待续部分" class="headerlink" title="未完待续部分"></a>未完待续部分</h1><ul>
+<li>全组合的去重问题</li>
+<li>从m个数中取出n个数的排列组合问题</li>
+<li>部分leetcode题解</li>
+</ul>
+]]></content>
+      <categories>
+        <category>算法与刷题</category>
+      </categories>
+  </entry>
+</search>

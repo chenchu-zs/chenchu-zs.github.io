@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Mist","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="今天刷题碰到了需要实现全排列的问题，乍一看觉得还好，c++ stl里有next_permutation可以实现。然后回头想了一下，如果换成c要怎么写？想了好久居然没想出来-。-因此狠狠的反思了一下，这和以前的自己有什么区别，写快排直接调sort，写堆排直接调优先队列，碰到需要修改一趟排序过程的题目，瞬间无从下手。太过依赖某一类语言的接口，反而忽略了对算法的实现，舍本逐末了。刷题是为了加强实现算法的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="算法总结之——排列组合问题">
+<meta property="og:url" content="http://example.com/2017/01/30/permutation/index.html">
+<meta property="og:site_name" content="chenchu.zs&#39;s blog">
+<meta property="og:description" content="今天刷题碰到了需要实现全排列的问题，乍一看觉得还好，c++ stl里有next_permutation可以实现。然后回头想了一下，如果换成c要怎么写？想了好久居然没想出来-。-因此狠狠的反思了一下，这和以前的自己有什么区别，写快排直接调sort，写堆排直接调优先队列，碰到需要修改一趟排序过程的题目，瞬间无从下手。太过依赖某一类语言的接口，反而忽略了对算法的实现，舍本逐末了。刷题是为了加强实现算法的">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-01-29T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-04-04T15:19:24.076Z">
+<meta property="article:author" content="Zhang Shu">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2017/01/30/permutation/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://example.com/2017/01/30/permutation/","path":"2017/01/30/permutation/","title":"算法总结之——排列组合问题"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>算法总结之——排列组合问题 | chenchu.zs's blog</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">chenchu.zs's blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">仓鼠君的瓜子库</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%A8%E6%8E%92%E5%88%97%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">全排列问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%92%E5%BD%92%E6%B1%82%E8%A7%A3%EF%BC%88%E4%BA%A4%E6%8D%A2%E6%B3%95%EF%BC%89"><span class="nav-number">1.1.</span> <span class="nav-text">递归求解（交换法）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF"><span class="nav-number">1.1.1.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6"><span class="nav-number">1.1.2.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E6%8F%8F%E8%BF%B0"><span class="nav-number">1.1.3.</span> <span class="nav-text">代码描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E5%8E%BB%E9%87%8D"><span class="nav-number">1.1.4.</span> <span class="nav-text">关于去重</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%9E%E9%80%92%E5%BD%92%E6%B1%82%E8%A7%A3"><span class="nav-number">1.2.</span> <span class="nav-text">非递归求解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6-1"><span class="nav-number">1.2.2.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E6%8F%8F%E8%BF%B0-1"><span class="nav-number">1.2.3.</span> <span class="nav-text">代码描述</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%A8%E7%BB%84%E5%90%88%E9%97%AE%E9%A2%98"><span class="nav-number">2.</span> <span class="nav-text">全组合问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%BD%AC%E5%8C%96%E6%B3%95-%E4%BD%8D%E5%9B%BE%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">二进制转化法(位图法)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF-2"><span class="nav-number">2.1.1.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E6%8F%8F%E8%BF%B0-2"><span class="nav-number">2.1.2.</span> <span class="nav-text">代码描述</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%92%E5%BD%92%E6%B3%95%EF%BC%88DFS%EF%BC%89"><span class="nav-number">2.2.</span> <span class="nav-text">递归法（DFS）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E6%8F%8F%E8%BF%B0%EF%BC%9A"><span class="nav-number">2.2.1.</span> <span class="nav-text">代码描述：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#leetcode%E7%9B%B8%E5%85%B3%E7%B1%BB%E5%9E%8B%E9%A2%98%E8%A7%A3"><span class="nav-number">3.</span> <span class="nav-text">leetcode相关类型题解</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%AA%E5%AE%8C%E5%BE%85%E7%BB%AD%E9%83%A8%E5%88%86"><span class="nav-number">4.</span> <span class="nav-text">未完待续部分</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhang Shu"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">Zhang Shu</p>
+  <div class="site-description" itemprop="description">积跬步以致千里</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/chenchu-zs" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;chenchu-zs" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2017/01/30/permutation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Zhang Shu">
+      <meta itemprop="description" content="积跬步以致千里">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chenchu.zs's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          算法总结之——排列组合问题
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2017-01-30 00:00:00" itemprop="dateCreated datePublished" datetime="2017-01-30T00:00:00+08:00">2017-01-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-04-04 23:19:24" itemprop="dateModified" datetime="2022-04-04T23:19:24+08:00">2022-04-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">算法与刷题</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>今天刷题碰到了需要实现全排列的问题，乍一看觉得还好，c++ stl里有<code>next_permutation</code>可以实现。然后回头想了一下，如果换成c要怎么写？想了好久居然没想出来-。-<br>因此狠狠的反思了一下，这和以前的自己有什么区别，写快排直接调sort，写堆排直接调优先队列，碰到需要修改一趟排序过程的题目，瞬间无从下手。太过依赖某一类语言的接口，反而忽略了对算法的实现，舍本逐末了。<br>刷题是为了加强实现算法的能力，而不是为了简单的完成任务。因此，总结一下全排列，警示下自己不要太浮躁。编程能力全凭不断积累，要坚持踏踏实实的修行啊。<br>(更新：又碰到了全组合的问题，一并总结了。)</p>
+<span id="more"></span>
+<h1 id="全排列问题"><a href="#全排列问题" class="headerlink" title="全排列问题"></a>全排列问题</h1><h2 id="递归求解（交换法）"><a href="#递归求解（交换法）" class="headerlink" title="递归求解（交换法）"></a>递归求解（交换法）</h2><h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><ol>
+<li>将序列$S$中第一个元素分别与后面每一个元素交换。这样就得到了n个序列，其中每个序列的首元素都不一样</li>
+<li>对$S[2]-S[n]$ 构成的子序列做递归。直到子序列中只有一个元素，输出整个序列$S$</li>
+<li>还原步骤1中交换的两元素</li>
+</ol>
+<h3 id="时间复杂度"><a href="#时间复杂度" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>不难看出这种解法的时间复杂度为$O(n!)$</p>
+<h3 id="代码描述"><a href="#代码描述" class="headerlink" title="代码描述"></a>代码描述</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(<span class="type">int</span> &amp;a, <span class="type">int</span> &amp;b)</span>   </span>&#123;</span><br><span class="line">    <span class="type">int</span> tmp = a;</span><br><span class="line">    a = b;</span><br><span class="line">    b = tmp;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func_perm</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;s, <span class="type">int</span> len, <span class="type">int</span> start)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (start == len - <span class="number">1</span>) &#123;              <span class="comment">//处理到最后一个元素，输出一个排列</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i) &#123;</span><br><span class="line">            cout &lt;&lt; s[i] &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = start; i &lt; len; ++i) &#123;</span><br><span class="line">        <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//交换首元素与后面的元素</span></span><br><span class="line">        <span class="built_in">func_perm</span>(s, len, start + <span class="number">1</span>);</span><br><span class="line">        <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//恢复</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector &lt;<span class="type">int</span>&gt; s;</span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; num) &#123;</span><br><span class="line">        s.<span class="built_in">push_back</span>(num);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">func_perm</span>(s,s.<span class="built_in">size</span>(),<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="关于去重"><a href="#关于去重" class="headerlink" title="关于去重"></a>关于去重</h3><p>用递归方式求解对于重复的判断是，序列中首部元素仅与未重复出现过的元素交换，即<br><strong>当第i个数与第j个数交换时，要求[i,j)中没有与第j个数相等的数</strong><br>因此代码中仅需加上对重复的判断即可。实现如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(<span class="type">int</span> &amp;a, <span class="type">int</span> &amp;b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> tmp = a;</span><br><span class="line">    a = b;</span><br><span class="line">    b = tmp;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func_perm</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;s, <span class="type">int</span> len, <span class="type">int</span> start)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (start == len - <span class="number">1</span>) &#123;                <span class="comment">//处理到最后一个元素，输出一个排列</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i)</span><br><span class="line">            cout &lt;&lt; s[i] &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = start; i &lt; len; ++i) &#123;</span><br><span class="line">        <span class="type">bool</span> flag = <span class="literal">true</span>;       <span class="comment">//没有重复的话就是true</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = start; j &lt; i; ++j) &#123;      <span class="comment">//去重的判断</span></span><br><span class="line">            <span class="keyword">if</span> (s[i] == s[j]) &#123;</span><br><span class="line">                flag = <span class="literal">false</span>;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (flag) &#123;</span><br><span class="line">            <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//交换首元素与后面的元素</span></span><br><span class="line">            <span class="built_in">func_perm</span>(s, len, start + <span class="number">1</span>);</span><br><span class="line">            <span class="built_in">swap</span>(s[start], s[i]);            <span class="comment">//恢复</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector &lt;<span class="type">int</span>&gt; s;</span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; num) &#123;</span><br><span class="line">        s.<span class="built_in">push_back</span>(num);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">func_perm</span>(s, s.<span class="built_in">size</span>(), <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="非递归求解"><a href="#非递归求解" class="headerlink" title="非递归求解"></a>非递归求解</h2><p>在STL中有两个计算全排列的函数<code>next_permutation</code>和<code>prev_permutation</code>，它们用的都是非递归求解的思路。</p>
+<h3 id="思路-1"><a href="#思路-1" class="headerlink" title="思路"></a>思路</h3><p>假设元素集合$S$中有n个元素，显然$S$中排列的个数为$n!$。给定一个排列，如果我们可以生成它字典序中对应的下一个排列，那么将字典序中最小的排列迭代$n!−1$次，就可以以非递归方式获得全排列。</p>
+<p>如何获得下一个字典序的全排列呢？</p>
+<p><strong>next_permutation</strong>的思路是：</p>
+<ol>
+<li>从序列$S$的尾端向前依次比较相邻两个元素，直至找到 $S_i&lt;S_i+1$ 的元素。（满足此条件一定存在一个排列比当前排列大）</li>
+<li>再次从序列$S$的尾端向前，找到比$S_i$大的第一个元素$S_j$，交换$S_i$和$S_j$</li>
+<li>将S[i+1:N]S[i+1:N] 翻转，输出新的$S$，即为下一个排列</li>
+</ol>
+<p>例如</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[1,2,3,4]--&gt;[1,2,4,3] 	//交换3和4</span><br><span class="line">[1,2,4,3]--&gt;[1,3,2,4]	//a.交换3和2  b.倒转[4,2]</span><br></pre></td></tr></table></figure>
+
+<h3 id="时间复杂度-1"><a href="#时间复杂度-1" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><ul>
+<li>最好情况只需交换一次，复杂度为$O(1)$</li>
+<li>最坏情况需要先将第一个元素换到最右，然后反转右面的所有元素。交换次数为$1+(n-1)&#x2F;2$，复杂度为$O(n)$。</li>
+<li>因为各种排列等可能出现，所以平均复杂度即为$O(n)$。</li>
+</ul>
+<h3 id="代码描述-1"><a href="#代码描述-1" class="headerlink" title="代码描述"></a>代码描述</h3><p>c++代码描述如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">next_perm</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;s)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> len = s.<span class="built_in">size</span>();</span><br><span class="line">    <span class="type">int</span> i, j;</span><br><span class="line">    <span class="keyword">for</span> (i = len - <span class="number">2</span>; i &gt;= <span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (s[i] &lt; s[i + <span class="number">1</span>])</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (i &lt; <span class="number">0</span>)              <span class="comment">//说明序列中不存在下一个字典序的排列</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">for</span> (j = len - <span class="number">1</span>; j &gt;= <span class="number">0</span>; --j) &#123;</span><br><span class="line">        <span class="keyword">if</span> (s[j] &gt; s[i])</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">swap</span>(s[i], s[j]);</span><br><span class="line">    <span class="built_in">reverse</span>(s.<span class="built_in">begin</span>() + i + <span class="number">1</span>, s.<span class="built_in">end</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector &lt;<span class="type">int</span>&gt; s;</span><br><span class="line">    <span class="type">int</span> num;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; num)       <span class="comment">//输入待排序列S</span></span><br><span class="line">        s.<span class="built_in">push_back</span>(num);</span><br><span class="line">    <span class="built_in">sort</span>(s.<span class="built_in">begin</span>(), s.<span class="built_in">end</span>());    <span class="comment">//首先找到最小字典序的排列</span></span><br><span class="line">    <span class="type">int</span> len = s.<span class="built_in">size</span>();</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i)   <span class="comment">//输出一个排列</span></span><br><span class="line">            cout &lt;&lt; s[i] &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="built_in">next_perm</span>(s));  <span class="comment">//当还存在下一个排列时，继续迭代</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="全组合问题"><a href="#全组合问题" class="headerlink" title="全组合问题"></a>全组合问题</h1><h2 id="二进制转化法-位图法"><a href="#二进制转化法-位图法" class="headerlink" title="二进制转化法(位图法)"></a>二进制转化法(位图法)</h2><p>这里仅适用于<strong>所有元素都不重复</strong>的情况。</p>
+<h3 id="思路-2"><a href="#思路-2" class="headerlink" title="思路"></a>思路</h3><p>假设一个序列中有n个元素，则对于每个元素都有选或者不选两种情况，共有$2^n−1$种情况(不考虑全不选的情况)，如果分别用0、1表示每个元素选还是不选，则这n个元素的选取情况可以完美对应到$1$ - $2^n-1$的二进制数字上 <code>00..01 - 11..11</code><br>因此，循环$1$ - $2^n-1$，输出对应代表的组合情况即可。</p>
+<h3 id="代码描述-2"><a href="#代码描述-2" class="headerlink" title="代码描述"></a>代码描述</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">combination</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> len = <span class="built_in">pow</span>(<span class="number">2</span>,nums.<span class="built_in">size</span>());       <span class="comment">//总共有2^len-1种可能性，不包括全都不选的为空的可能性</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; len; ++i) &#123;</span><br><span class="line">        vector&lt;<span class="type">int</span>&gt; ans;</span><br><span class="line">        <span class="type">int</span> tmp = i;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; nums.<span class="built_in">size</span>(); ++j) &#123;</span><br><span class="line">            <span class="type">bool</span> choose = tmp &amp; <span class="number">1</span>;</span><br><span class="line">            tmp = tmp &gt;&gt; <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (choose)</span><br><span class="line">                ans.<span class="built_in">push_back</span>(nums[j]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">int</span> l = ans.<span class="built_in">size</span>();</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; l; k++)   <span class="comment">//输出一个组合的结果</span></span><br><span class="line">            cout &lt;&lt; ans[k] &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">        cout &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; nums;</span><br><span class="line">    <span class="type">int</span> input;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; input)</span><br><span class="line">        nums.<span class="built_in">push_back</span>(input);</span><br><span class="line">    <span class="built_in">combination</span>(nums);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="递归法（DFS）"><a href="#递归法（DFS）" class="headerlink" title="递归法（DFS）"></a>递归法（DFS）</h2><p>这种方法比较直观，就是对每个元素分别取选和不选两种策略，然后对下一个元素进行递归。</p>
+<h3 id="代码描述："><a href="#代码描述：" class="headerlink" title="代码描述："></a>代码描述：</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(vector&lt;<span class="type">int</span>&gt; ans)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> len = ans.<span class="built_in">size</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i)</span><br><span class="line">        cout &lt;&lt; ans[i] &lt;&lt; <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">    cout &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">combination</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; nums, vector&lt;<span class="type">int</span>&gt;&amp; ans, <span class="type">int</span> index, <span class="type">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (index == n)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">print</span>(ans);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ans.<span class="built_in">push_back</span>(nums[index]);                <span class="comment">//对每个元素，选或者不选，两种策略</span></span><br><span class="line">    <span class="built_in">combination</span>(nums, ans, index + <span class="number">1</span>, n);</span><br><span class="line">    ans.<span class="built_in">pop_back</span>();</span><br><span class="line">    <span class="built_in">combination</span>(nums, ans, index + <span class="number">1</span>, n);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; nums;</span><br><span class="line">    <span class="type">int</span> input;</span><br><span class="line">    <span class="keyword">while</span> (cin &gt;&gt; input)</span><br><span class="line">        nums.<span class="built_in">push_back</span>(input);</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; ans;</span><br><span class="line">    <span class="built_in">combination</span>(nums,ans, <span class="number">0</span>, nums.<span class="built_in">size</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="leetcode相关类型题解"><a href="#leetcode相关类型题解" class="headerlink" title="leetcode相关类型题解"></a>leetcode相关类型题解</h1><p>关于排列问题的：</p>
+<table>
+<thead>
+<tr>
+<th><strong>题号</strong></th>
+<th><strong>题解</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a target="_blank" rel="noopener" href="https://leetcode.com/problems/permutation">Permutations</a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/chenchu-zs/leetcode/blob/master/046.cpp">046.cpp</a></td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://leetcode.com/problems/permutations-ii">Permutations II</a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/chenchu-zs/leetcode/blob/master/047.cpp">047.cpp(非递归解法)</a><br><a target="_blank" rel="noopener" href="http://link/">047_2.cpp(递归解法)</a></td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://leetcode.com/problems/next-permutation">Next Permutation</a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/chenchu-zs/leetcode/blob/master/031.cpp">031.cpp</a></td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://leetcode.com/problems/permutation-sequence">Permutation Sequence</a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/chenchu-zs/leetcode/blob/master/060.cpp">060.cpp</a></td>
+</tr>
+</tbody></table>
+<p>关于组合问题的：</p>
+<table>
+<thead>
+<tr>
+<th><strong>题号</strong></th>
+<th><strong>题解</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a target="_blank" rel="noopener" href="https://leetcode.com/problems/subsets/">Subsets</a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/chenchu-zs/leetcode/blob/master/078.cpp">078.cpp</a></td>
+</tr>
+</tbody></table>
+<h1 id="未完待续部分"><a href="#未完待续部分" class="headerlink" title="未完待续部分"></a>未完待续部分</h1><ul>
+<li>全组合的去重问题</li>
+<li>从m个数中取出n个数的排列组合问题</li>
+<li>部分leetcode题解</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2017/02/06/regex/" rel="next" title="正则表达式">
+                  正则表达式 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhang Shu</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">14k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">12 分钟</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>
