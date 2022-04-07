@@ -77,9 +77,41 @@
 <h2 id="公式正确展示"><a href="#公式正确展示" class="headerlink" title="公式正确展示"></a>公式正确展示</h2><p>网上有好多教程，但是我实际操作下来并没有那么麻烦，无需卸载和重装什么东西，只需要在<code>next/_config.yml</code>里找到math参数，把<code>every_page</code>设为<code>true</code>, 选择渲染引擎为<code>mathjax</code>即可。</p>
 <h1 id="博客部署"><a href="#博客部署" class="headerlink" title="博客部署"></a>博客部署</h1><h2 id="生成静态页面并部署"><a href="#生成静态页面并部署" class="headerlink" title="生成静态页面并部署"></a>生成静态页面并部署</h2><p>命令如下：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
-<h2 id="部署到github"><a href="#部署到github" class="headerlink" title="部署到github"></a>部署到github</h2><h1 id="五年回顾"><a href="#五年回顾" class="headerlink" title="五年回顾"></a>五年回顾</h1>]]></content>
+<h2 id="部署到git-page"><a href="#部署到git-page" class="headerlink" title="部署到git page"></a>部署到git page</h2><p>首先安装git部署插件:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
+<p>修改<code>_config.yml</code>的deploy字段（文件的注释中有相应的教程文档），我的配置如下：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">&#x27;git&#x27;</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://gitee.com/chenchu-zs/chenchu-zs</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
+<p>修改完之后执行以下命令</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
+<p>这里要说一下，之前的博客我用的是github page，但是由于github访问太慢，时不时抽风404，最终决定切换到国内的gitee，国产平台真香，新建仓库时可以使用各种模板，还能创建免费的私有库，非常好用啊~</p>
+<h1 id="五年回顾"><a href="#五年回顾" class="headerlink" title="五年回顾"></a>五年回顾</h1>]]></content>
       <categories>
         <category>杂七杂八</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>linux环境基本配置</title>
+    <url>/2022/04/07/linux-config/</url>
+    <content><![CDATA[<p>个人比较习惯的一些命令行和终端配置，留在博客里方便以后复制粘贴。</p>
+<span id="more"></span>
+<p>终端我一般用bash或者zsh，bash经常是在公司里使用的，zsh就在自己机器上用</p>
+<h1 id="bashrc配置"><a href="#bashrc配置" class="headerlink" title="bashrc配置"></a>bashrc配置</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#设置终端主题，支持显示git分支</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">git_branch_prompt</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">local</span> branch=$(git symbolic-ref --short -q HEAD 2&gt;/dev/null)</span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$branch</span> ]; <span class="keyword">then</span> <span class="built_in">echo</span> <span class="string">&quot;|<span class="variable">$branch</span>&quot;</span>; <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> PS1=<span class="string">&quot;\[\033[01;36m\]\u@\[\033[01;33m\]\h.<span class="variable">$add</span> \[\033[0;36m\]\w\[\033[0;32m\]\$(git_branch_prompt)\[\033[37;36m\]\\$ \[\033[00m\]&quot;</span></span><br><span class="line"><span class="comment"># 修改指令避免不可挽回的删除</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">mv</span>=<span class="string">&quot;mv -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">cp</span>=<span class="string">&quot;cp -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">rm</span>=<span class="string">&quot;rm -i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动打印当前scp路径</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">sloc</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    myname=`hostname`</span><br><span class="line">    myuser=`<span class="built_in">whoami</span>`</span><br><span class="line">    mypath=`<span class="built_in">pwd</span>`</span><br><span class="line">    <span class="keyword">for</span> arg <span class="keyword">in</span> <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="variable">$myuser</span><span class="string">&quot;@&quot;</span><span class="variable">$myname</span><span class="string">&quot;:&quot;</span><span class="variable">$mypath</span><span class="string">&quot;/&quot;</span><span class="variable">$arg</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># export PS1=&quot;\[\e[37m\][\[\e[32m\]\u@\[\e[35m\]\h. \[\e[34m\]\w\[\e[32m\]\$(git_branch_prompt)\[\e[37m\]]\[\e[0m\]\\$ &quot;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>主要是命令行样式的修改看心情，PS1的颜色修改见下图<br><img src="/2022/04/07/linux-config/1.png" alt="image.png"></p>
+</blockquote>
+<h1 id="zsh配置"><a href="#zsh配置" class="headerlink" title="zsh配置"></a>zsh配置</h1><ol>
+<li>安装<code>oh-my-zsh</code></li>
+<li>在<code>.zshrc</code>中修改字段<code>ZSH_THEME=&quot;pygmalion&quot;</code></li>
+</ol>
+<h1 id="inputrc配置"><a href="#inputrc配置" class="headerlink" title="inputrc配置"></a>inputrc配置</h1><p>只需要在bash里配置（zsh自带），避免了通过<code>ctrl + r</code>来搜索历史命令的麻烦</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot;\e[A&quot;: history-search-backward</span><br><span class="line">&quot;\e[B&quot;: history-search-forward</span><br><span class="line">set show-all-if-ambiguous on</span><br><span class="line">set completion-ignore-case on</span><br></pre></td></tr></table></figure>
+
+<h1 id="ssh配置"><a href="#ssh配置" class="headerlink" title="ssh配置"></a>ssh配置</h1><p>给需要链接的远程服务器做个简单配置。编辑<code>.ssh/config</code>, 如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host 255.255.255.255</span><br><span class="line">HostName fake_server</span><br><span class="line">User chenchu.zs</span><br><span class="line">Port 8088</span><br></pre></td></tr></table></figure>
+<p>有时候远程服务器长时间没有操作会自动把你踢下来，配置一下自动重连和记忆功能，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host *</span><br><span class="line">    ControlMaster auto</span><br><span class="line">    ControlPath /tmp/ssh_connection_%h_%p_%r.sock</span><br><span class="line">    ServerAliveInterval 80</span><br><span class="line">    ServerAliveCountMax 6</span><br><span class="line">    ForwardAgent yes</span><br><span class="line">    CheckHostIP no</span><br><span class="line">    Compression yes</span><br><span class="line">    ControlPersist 72h</span><br><span class="line">    StrictHostKeyChecking=no</span><br><span class="line">    GSSAPIAuthentication=no</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>系统配置相关</category>
       </categories>
   </entry>
   <entry>
@@ -95,9 +127,12 @@
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
 
 <p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>]]></content>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>
+<h1 id="支持的插件"><a href="#支持的插件" class="headerlink" title="支持的插件"></a>支持的插件</h1><p>(更新中，理解了一个就更新一个)</p>
+<h2 id="ctrlp"><a href="#ctrlp" class="headerlink" title="ctrlp"></a>ctrlp</h2><p>模糊搜索插件，已经mapping到了快捷键<code>ctrl + F</code></p>
+<h2 id="nerdtree"><a href="#nerdtree" class="headerlink" title="nerdtree"></a>nerdtree</h2>]]></content>
       <categories>
-        <category>linux配置相关</category>
+        <category>系统配置相关</category>
       </categories>
   </entry>
   <entry>
