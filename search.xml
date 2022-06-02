@@ -84,7 +84,12 @@
 <p>修改完之后执行以下命令</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
 <p>这里要说一下，之前的博客我用的是github page，但是由于github访问太慢，时不时抽风404，最终决定切换到国内的gitee，国产平台真香，新建仓库时可以使用各种模板，还能创建免费的私有库，非常好用啊~</p>
-<h1 id="五年回顾"><a href="#五年回顾" class="headerlink" title="五年回顾"></a>五年回顾</h1>]]></content>
+<h1 id="五年回顾"><a href="#五年回顾" class="headerlink" title="五年回顾"></a>五年回顾</h1><p>2017年5月，我拿到了第一个实习offer。<br>企业的环境比起学校来说，对能力的锻炼是飞速的。在第一家实习公司我学到了如何快速的完成工业项目的需求。在第二家实习公司我学到了开源项目的协同合作开发和测试流程。在第三家实习公司培我逐渐培养起了解决问题的方法论，以及学到了一点怎么去做一些探索性的东西的思路。</p>
+<p>而从毕业到现在，我也在这第三家公司待了两年多了。在第一份实习里，带我的mentor是一个工作两年的师兄，一个非常靠谱的人。如今我也是个毕业两年多的人了，也开始带新人了，有时候恍惚回想起五年前，一边感激当年的前辈，一边也会想着怎么能像当前师兄带我一样去帮助新人成长。</p>
+<p>五年带给人的变化不止是从新人变成熟练工这么简单，我从最早的C++后端，到高性能计算以及现在的AI infra方向，不知不觉方向也经历了很大的变动。到今天这个时间节点，AI infra已经是一个从业者众多，卷成红海一样的方向了。很多大公司都试图提出自己的解决方案，这导致这个方向的技术，非常的碎片化。</p>
+<p>有时候我也会觉得迷茫和心累，并不知道这是否是个可持续的方向。也会想象一下，再过五年我会做哪个领域的东西呢？五年时间深度学习技术经历了翻天覆地的变化，从CV到NLP，新的方案不停被推出。或许再过五年，现在我非常熟悉和擅长的东西也已经过时了。</p>
+<p>时代滚滚向前，不努力更新知识就会被甩下去，如今我能做的也只有保持持续学习和知识记录这一条路了。<br>仅以此文置顶，激励自己坚持更新博客和自己的知识体系。</p>
+]]></content>
       <categories>
         <category>杂七杂八</category>
       </categories>
@@ -97,8 +102,11 @@
 <p>终端我一般用bash或者zsh，bash经常是在公司里使用的，zsh就在自己机器上用</p>
 <h1 id="bashrc配置"><a href="#bashrc配置" class="headerlink" title="bashrc配置"></a>bashrc配置</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#设置终端主题，支持显示git分支</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">git_branch_prompt</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">local</span> branch=$(git symbolic-ref --short -q HEAD 2&gt;/dev/null)</span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$branch</span> ]; <span class="keyword">then</span> <span class="built_in">echo</span> <span class="string">&quot;|<span class="variable">$branch</span>&quot;</span>; <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> PS1=<span class="string">&quot;\[\033[01;36m\]\u@\[\033[01;33m\]\h.<span class="variable">$add</span> \[\033[0;36m\]\w\[\033[0;32m\]\$(git_branch_prompt)\[\033[37;36m\]\\$ \[\033[00m\]&quot;</span></span><br><span class="line"><span class="comment"># 修改指令避免不可挽回的删除</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">mv</span>=<span class="string">&quot;mv -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">cp</span>=<span class="string">&quot;cp -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">rm</span>=<span class="string">&quot;rm -i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动打印当前scp路径</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">sloc</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    myname=`hostname`</span><br><span class="line">    myuser=`<span class="built_in">whoami</span>`</span><br><span class="line">    mypath=`<span class="built_in">pwd</span>`</span><br><span class="line">    <span class="keyword">for</span> arg <span class="keyword">in</span> <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="variable">$myuser</span><span class="string">&quot;@&quot;</span><span class="variable">$myname</span><span class="string">&quot;:&quot;</span><span class="variable">$mypath</span><span class="string">&quot;/&quot;</span><span class="variable">$arg</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># export PS1=&quot;\[\e[37m\][\[\e[32m\]\u@\[\e[35m\]\h. \[\e[34m\]\w\[\e[32m\]\$(git_branch_prompt)\[\e[37m\]]\[\e[0m\]\\$ &quot;</span></span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>主要是命令行样式的修改看心情，PS1的颜色修改见下图<br><img src="/2022/04/07/linux-config/1.png" alt="image.png"></p>
+<p>主要是命令行样式的修改看心情，PS1的颜色修改见下图</p>
 </blockquote>
+<!-- ![image.png](1.png) -->
+<img src="1.png" width="50%" height="50%">
+
 <h1 id="zsh配置"><a href="#zsh配置" class="headerlink" title="zsh配置"></a>zsh配置</h1><ol>
 <li>安装<code>oh-my-zsh</code></li>
 <li>在<code>.zshrc</code>中修改字段<code>ZSH_THEME=&quot;pygmalion&quot;</code></li>
@@ -119,7 +127,7 @@
     <url>/2021/05/31/vim/</url>
     <content><![CDATA[<p>稍微调教一下vim</p>
 <span id="more"></span>
-<p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
+<h1 id="基本配置"><a href="#基本配置" class="headerlink" title="基本配置"></a>基本配置</h1><p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
 <p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
 
@@ -190,7 +198,7 @@
 <h1 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装完之后启动docker</span></span><br><span class="line">sudo systemctl start docker</span><br></pre></td></tr></table></figure>
 <p>踩坑1：启动docker的时候失败，<code>sudo dockerd --debug</code>查找原因<br>原因是没有network，解决方法:</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo ip <span class="built_in">link</span> add name docker0 <span class="built_in">type</span> bridge</span><br><span class="line">sudo ip addr add dev docker0 172.17.0.1/16</span><br></pre></td></tr></table></figure>
-<p>踩坑2：需要重启docker，找不到socket，更改了本机lib里的docker.socket，参考这个图中的方法<br><img src="/2021/03/12/docker-env/1.png" alt="image.png"></p>
+<p>踩坑2：需要重启docker，找不到socket，更改了本机lib里的docker.socket，参考这个图中的方法.<br><img src="1.png" width="50%" height="50%"></p>
 <h1 id="路径配置"><a href="#路径配置" class="headerlink" title="路径配置"></a>路径配置</h1><p>系统默认会把docker的镜像放在<code>/var/lib/docker</code>的目录下，有时候这个目录的磁盘空间往往不会很大，当docker镜像比较多的时候，会导致磁盘空间不足，一个解决办法是将docker路径重定向到自己家目录下的本地空间，操作方式如下：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl stop docker</span><br><span class="line">ps aux | grep -i docker | grep -v grep   	<span class="comment">#查看是否完全stop了</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 移动到新的路径</span></span><br><span class="line"><span class="built_in">mv</span> /var/lib/docker  /new/path</span><br><span class="line"><span class="built_in">ln</span> -s /new/path /var/lib/docker </span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启docker</span></span><br><span class="line">systemctl start docker</span><br></pre></td></tr></table></figure>
 <h1 id="sudo权限"><a href="#sudo权限" class="headerlink" title="sudo权限"></a>sudo权限</h1><p>docker使用unix socket进行通讯，但是unix socket属于root用户，但是普通用户需要使用sudo才能开启root权限，但是普通的操作并没有root权限。可通过以下操作使docker拥有sudo权限.</p>
