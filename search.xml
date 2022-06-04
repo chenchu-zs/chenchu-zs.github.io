@@ -95,6 +95,151 @@
       </categories>
   </entry>
   <entry>
+    <title>Docker学习笔记——容器container</title>
+    <url>/2021/03/14/docker-container/</url>
+    <content><![CDATA[<h1 id="查看本机已有的容器"><a href="#查看本机已有的容器" class="headerlink" title="查看本机已有的容器"></a>查看本机已有的容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看本机所有的容器</span></span><br><span class="line">docker ps -a</span><br><span class="line"><span class="comment"># 查看本机正在运行的容器</span></span><br><span class="line">docker ps</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h1 id="创建容器"><a href="#创建容器" class="headerlink" title="创建容器"></a>创建容器</h1><p>容器是从镜像中创建的，相当于一个镜像的实例。<br>使用命令<code>docker run</code>创建容器，创建时有很多不同的选项参数：</p>
+<ul>
+<li><code>-it</code>: 表示进入容器</li>
+<li><code>-d</code>: 表示后台启动，不会进入容器</li>
+<li><code>--name</code>: 给启动的容器命名，建议加上这个参数，方便自己记忆调试的是哪个容器，不然系统会以随机的方式命名。</li>
+<li><code>--network=host</code>: 使用宿主机的网络</li>
+<li><code>--gpus=all</code>: 启动GPU环境</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 进入到docker里面执行</span></span><br><span class="line">docker run -it &lt;images&gt;:&lt;tag&gt; /bin/bash</span><br><span class="line"><span class="comment"># 指定可见的宿主机的路径</span></span><br><span class="line">docker run -it -v &lt;local_path&gt;:/root/&lt;docker_path&gt; &lt;images&gt;:&lt;tag&gt; /bin/bash</span><br><span class="line"><span class="comment"># 后台启动，不会进入容器</span></span><br><span class="line">docker run -d --name &lt;container_desc&gt; &lt;images&gt;:&lt;tag&gt;</span><br><span class="line"><span class="comment"># 启动时传入环境变量</span></span><br><span class="line">docker run -e</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>备注：<br>每次<code>docker run</code>会创建一个不同的容器。如果不kill容器，则容器会逐渐增多，比如下面这样：<img src="/2021/03/14/docker-container/1.png" alt="image.png">因此除了第一次启动容器，不建议以这种方式来启动。</p>
+</blockquote>
+<h1 id="进入容器"><a href="#进入容器" class="headerlink" title="进入容器"></a>进入容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker <span class="built_in">exec</span> -it  &lt;container <span class="built_in">id</span>&gt; /bin/bash</span><br></pre></td></tr></table></figure>
+
+<h1 id="启动和退出容器"><a href="#启动和退出容器" class="headerlink" title="启动和退出容器"></a>启动和退出容器</h1><p>在进入容器前必须先启动容器，在删除容器之前也必须要退出容器。容器是否启动还是退出可以通过<code>docker ps -a</code>来查看容器的状态。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动容器</span></span><br><span class="line">docker start  &lt;container <span class="built_in">id</span>&gt;</span><br><span class="line"><span class="comment"># 退出容器</span></span><br><span class="line">docker stop  &lt;container <span class="built_in">id</span>&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="删除容器"><a href="#删除容器" class="headerlink" title="删除容器"></a>删除容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker <span class="built_in">rm</span> &lt;container_ID&gt;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Docker学习笔记——环境配置</title>
+    <url>/2021/03/12/docker-env/</url>
+    <content><![CDATA[<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>使用yum方式安装，但是首先要保证有centos的yum源，然后<code>yum install docker-ce</code></p>
+<span id="more"></span>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装centos的yum源</span></span><br><span class="line">wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装docker</span></span><br><span class="line">sudo yum install docker-ce</span><br></pre></td></tr></table></figure>
+<h1 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装完之后启动docker</span></span><br><span class="line">sudo systemctl start docker</span><br></pre></td></tr></table></figure>
+<p>踩坑1：启动docker的时候失败，<code>sudo dockerd --debug</code>查找原因<br>原因是没有network，解决方法:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo ip <span class="built_in">link</span> add name docker0 <span class="built_in">type</span> bridge</span><br><span class="line">sudo ip addr add dev docker0 172.17.0.1/16</span><br></pre></td></tr></table></figure>
+<p>踩坑2：需要重启docker，找不到socket，更改了本机lib里的docker.socket，参考这个图中的方法.<br><img src="1.png" width="50%" height="50%"></p>
+<h1 id="路径配置"><a href="#路径配置" class="headerlink" title="路径配置"></a>路径配置</h1><p>系统默认会把docker的镜像放在<code>/var/lib/docker</code>的目录下，有时候这个目录的磁盘空间往往不会很大，当docker镜像比较多的时候，会导致磁盘空间不足，一个解决办法是将docker路径重定向到自己家目录下的本地空间，操作方式如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl stop docker</span><br><span class="line">ps aux | grep -i docker | grep -v grep   	<span class="comment">#查看是否完全stop了</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 移动到新的路径</span></span><br><span class="line"><span class="built_in">mv</span> /var/lib/docker  /new/path</span><br><span class="line"><span class="built_in">ln</span> -s /new/path /var/lib/docker </span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启docker</span></span><br><span class="line">systemctl start docker</span><br></pre></td></tr></table></figure>
+<h1 id="sudo权限"><a href="#sudo权限" class="headerlink" title="sudo权限"></a>sudo权限</h1><p>docker使用unix socket进行通讯，但是unix socket属于root用户，但是普通用户需要使用sudo才能开启root权限，但是普通的操作并没有root权限。可通过以下操作使docker拥有sudo权限.</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo groupadd docker</span><br><span class="line">sudo usermod -aG docker <span class="variable">$USER</span></span><br></pre></td></tr></table></figure>
+<p>如果是虚拟机，则需要reboot机器才能生效<br>如果无法reboot，那通过<code>newgrp docker</code>，使之在当前目录生效</p>
+<p>开启了sudo权限之后，可以通过vscode远程访问docker容器</p>
+]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Docker学习笔记——镜像image</title>
+    <url>/2021/03/13/docker-image/</url>
+    <content><![CDATA[<h1 id="查看已有的镜像信息"><a href="#查看已有的镜像信息" class="headerlink" title="查看已有的镜像信息"></a>查看已有的镜像信息</h1><p>使用命令<code>docker images</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker images</span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">php                 latest              fe1a2c2228f4        2 days ago          364 MB</span><br><span class="line">mongo               latest              87bde25ffc68        2 days ago          326.7 MB</span><br><span class="line">ubuntu              latest              42118e3df429        9 days ago          124.8 MB</span><br><span class="line">redis               latest              4465e4bcad80        6 weeks ago         185.7 MB</span><br><span class="line">nginx               latest              0d409d33b27e        8 weeks ago         182.8 MB</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h1 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h1><p>删除镜像之前要先删掉根据镜像建立的容器，然后才可以删除对应的镜像。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 删除指定id的镜像</span></span><br><span class="line">docker rmi &lt;image <span class="built_in">id</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除当前机器上的无用镜像(名称或标签为none)</span></span><br><span class="line">sudo docker images | grep <span class="string">&#x27;&lt;none&gt;&#x27;</span> | awk <span class="string">&#x27;&#123;print $3&#125;&#x27;</span>| xargs sudo docker rmi -f </span><br></pre></td></tr></table></figure>
+<h1 id="下载远程镜像"><a href="#下载远程镜像" class="headerlink" title="下载远程镜像"></a>下载远程镜像</h1><p>命令：<code>docker pull NAME[:TAG]</code></p>
+<blockquote>
+<p>不指定tag的时候默认使用:latest</p>
+</blockquote>
+<p><strong>提高下载速度的技巧</strong><br>国外的docker下载速度太慢，可以找国内阿里云的镜像之类的。<br>登录阿里云账号：在类似的路径下搜索<a href="https://cr.console.aliyun.com/cn-beijing/instances/images">https://cr.console.aliyun.com/cn-beijing/instances/images</a>，比如<br><img src="/2021/03/13/docker-image/1.png" alt="image.png"></p>
+<p>也可以配置docker加速器：<a href="https://blog.csdn.net/liu865033503/article/details/95936640">https://blog.csdn.net/liu865033503/article/details/95936640</a></p>
+<h1 id="上传镜像"><a href="#上传镜像" class="headerlink" title="上传镜像"></a>上传镜像</h1><p>命令：<code>docker push NAME[:TAG]</code></p>
+]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>GDB基础</title>
+    <url>/2017/08/19/gdb/</url>
+    <content><![CDATA[<p>调试前首先要<strong>gcc -g</strong>，在可执行文件中生成调试信息。<br>实际的项目代码往往是用cmake编译的。通过控制CMAKE_BUILD_TYPE可以选择是否生成调试信息。例如</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE RelWithDebInfo)</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h1 id="GDB基础命令"><a href="#GDB基础命令" class="headerlink" title="GDB基础命令"></a>GDB基础命令</h1><h2 id="打断点-break-x2F-b"><a href="#打断点-break-x2F-b" class="headerlink" title="打断点: break&#x2F;b"></a>打断点: break&#x2F;b</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">b &lt;函数名&gt;/&lt;行数&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>b main:在main函数处打断点。</li>
+<li>b 8 ：在第8行打断点</li>
+<li>info b：查看所有断点</li>
+<li>d xxx ：删除断点（delete）</li>
+<li>disable x：禁用断点（但是仍然存在）</li>
+<li>enable x：激活断点</li>
+</ul>
+<h2 id="设置运行参数"><a href="#设置运行参数" class="headerlink" title="设置运行参数"></a>设置运行参数</h2><p>在程序执行之前就应该先设置好参数</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set args &lt;参数列表&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="运行程序"><a href="#运行程序" class="headerlink" title="运行程序"></a>运行程序</h2><ul>
+<li><code>r（run）</code>（相当于vs里的F5，开始执行直到遇到断点或者退出）</li>
+<li><code>start</code> :（相当于vs里的F10，开始调试，单步执行）</li>
+</ul>
+<h2 id="继续执行"><a href="#继续执行" class="headerlink" title="继续执行"></a>继续执行</h2><ul>
+<li><code>n（next）</code>：向下单步执行，不进入函数。相当于vs里的F10</li>
+<li><code>s（step）</code>：向下单步执行，但是进入函数。相当于vs的F11</li>
+<li><code>finish</code>：运行完当前函数，跳出后停止。</li>
+<li><code>c（continue</code>：向下执行到下一个断点。（相当于vs里不单步，继续F5）</li>
+</ul>
+<h2 id="检查变量-print-x2F-watch"><a href="#检查变量-print-x2F-watch" class="headerlink" title="检查变量: print&#x2F;watch"></a>检查变量: print&#x2F;watch</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">p &lt;待检测的变量&gt;</span><br><span class="line">watch &lt;变量名&gt; 监视变量（当发生变动时自动打印）</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>p a</code> ：查看变量a的值</li>
+<li><code>p &amp;b</code>：查看变量b的地址</li>
+<li><code>p c[1]</code>: 查看数组c的下标为1的值</li>
+</ul>
+<h2 id="列出程序源码-l（list）"><a href="#列出程序源码-l（list）" class="headerlink" title="列出程序源码  l（list）"></a>列出程序源码  l（list）</h2><h2 id="栈跟踪-bt（backtrace：回溯）"><a href="#栈跟踪-bt（backtrace：回溯）" class="headerlink" title="栈跟踪  bt（backtrace：回溯）"></a>栈跟踪  bt（backtrace：回溯）</h2><p>bt用来定位崩溃位置。<strong>这是gdb最常见的应用，实际工作中其他错误都可以通过打印日志的方式来确定。</strong></p>
+<h2 id="查看内存"><a href="#查看内存" class="headerlink" title="查看内存"></a>查看内存</h2><p><strong>查看内存是GDB另一个非常重要的应用</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">x /&lt;nfu&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>x 是 examine 的缩写</li>
+<li>n表示要显示的内存单元的个数</li>
+<li>f表示显示方式, 可取如下值<ul>
+<li>x 按十六进制格式显示变量。</li>
+<li>d 按十进制格式显示变量。</li>
+<li>u 按十进制格式显示无符号整型。</li>
+<li>o 按八进制格式显示变量。</li>
+<li>t 按二进制格式显示变量。</li>
+<li>a 按十六进制格式显示变量。</li>
+<li>i 指令地址格式</li>
+<li>c 按字符格式显示变量。</li>
+<li>f 按浮点数格式显示变量。</li>
+</ul>
+</li>
+<li>u表示一个地址单元的长度<ul>
+<li>b表示单字节，</li>
+<li>h表示双字节，</li>
+<li>w表示四字节，</li>
+<li>g表示八字节</li>
+</ul>
+</li>
+</ul>
+<p>例如 x &#x2F;20xb  </p>
+<h1 id="gdb的其他技巧"><a href="#gdb的其他技巧" class="headerlink" title="gdb的其他技巧"></a>gdb的其他技巧</h1><ul>
+<li><code>info locals</code>：可以查看当前函数的所有局部变量</li>
+<li><code>info registers esp ebp</code>：可以查看寄存器值</li>
+</ul>
+<h2 id="gdb查看汇编代码"><a href="#gdb查看汇编代码" class="headerlink" title="gdb查看汇编代码"></a>gdb查看汇编代码</h2><ul>
+<li><code>ni</code> 在汇编中单步，不进入函数内部</li>
+<li><code>si</code> 在汇编中单步，要进入函数内部</li>
+<li><code>set disassemble-next-line on</code> 断点时查看行号</li>
+</ul>
+<h2 id="gdb-attach"><a href="#gdb-attach" class="headerlink" title="gdb attach"></a>gdb attach</h2><p>attach到进程上然后调试</p>
+]]></content>
+      <categories>
+        <category>工具使用</category>
+      </categories>
+      <tags>
+        <tag>c++</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>linux环境基本配置</title>
     <url>/2022/04/07/linux-config/</url>
     <content><![CDATA[<p>个人比较习惯的一些命令行和终端配置，留在博客里方便以后复制粘贴。</p>
@@ -120,176 +265,6 @@
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host *</span><br><span class="line">    ControlMaster auto</span><br><span class="line">    ControlPath /tmp/ssh_connection_%h_%p_%r.sock</span><br><span class="line">    ServerAliveInterval 80</span><br><span class="line">    ServerAliveCountMax 6</span><br><span class="line">    ForwardAgent yes</span><br><span class="line">    CheckHostIP no</span><br><span class="line">    Compression yes</span><br><span class="line">    ControlPersist 72h</span><br><span class="line">    StrictHostKeyChecking=no</span><br><span class="line">    GSSAPIAuthentication=no</span><br></pre></td></tr></table></figure>]]></content>
       <categories>
         <category>系统配置相关</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>vim配置</title>
-    <url>/2021/05/31/vim/</url>
-    <content><![CDATA[<p>稍微调教一下vim</p>
-<span id="more"></span>
-<h1 id="基本配置"><a href="#基本配置" class="headerlink" title="基本配置"></a>基本配置</h1><p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
-<p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
-
-<p>vi .vim_runtime&#x2F;vimrcs&#x2F;basic.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
-
-<p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>
-<h1 id="支持的插件"><a href="#支持的插件" class="headerlink" title="支持的插件"></a>支持的插件</h1><p>(更新中，理解了一个就更新一个)</p>
-<h2 id="ctrlp"><a href="#ctrlp" class="headerlink" title="ctrlp"></a>ctrlp</h2><p>模糊搜索插件，已经mapping到了快捷键<code>ctrl + F</code></p>
-<h2 id="nerdtree"><a href="#nerdtree" class="headerlink" title="nerdtree"></a>nerdtree</h2>]]></content>
-      <categories>
-        <category>系统配置相关</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>Docker学习笔记——容器container</title>
-    <url>/2021/03/14/docker-container/</url>
-    <content><![CDATA[<h1 id="查看本机已有的容器"><a href="#查看本机已有的容器" class="headerlink" title="查看本机已有的容器"></a>查看本机已有的容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看本机所有的容器</span></span><br><span class="line">docker ps -a</span><br><span class="line"><span class="comment"># 查看本机正在运行的容器</span></span><br><span class="line">docker ps</span><br></pre></td></tr></table></figure>
-<span id="more"></span>
-<h1 id="创建容器"><a href="#创建容器" class="headerlink" title="创建容器"></a>创建容器</h1><p>容器是从镜像中创建的，相当于一个镜像的实例。<br>使用命令<code>docker run</code>创建容器，创建时有很多不同的选项参数：</p>
-<ul>
-<li><code>-it</code>: 表示进入容器</li>
-<li><code>-d</code>: 表示后台启动，不会进入容器</li>
-<li><code>--name</code>: 给启动的容器命名，建议加上这个参数，方便自己记忆调试的是哪个容器，不然系统会以随机的方式命名。</li>
-<li><code>--network=host</code>: 使用宿主机的网络</li>
-<li><code>--gpus=all</code>: 启动GPU环境</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 进入到docker里面执行</span></span><br><span class="line">docker run -it &lt;images&gt;:&lt;tag&gt; /bin/bash</span><br><span class="line"><span class="comment"># 指定可见的宿主机的路径</span></span><br><span class="line">docker run -it -v &lt;local_path&gt;:/root/&lt;docker_path&gt; &lt;images&gt;:&lt;tag&gt; /bin/bash</span><br><span class="line"><span class="comment"># 后台启动，不会进入容器</span></span><br><span class="line">docker run -d --name &lt;container_desc&gt; &lt;images&gt;:&lt;tag&gt;</span><br><span class="line"><span class="comment"># 启动时传入环境变量</span></span><br><span class="line">docker run -e</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>备注：<br>每次<code>docker run</code>会创建一个不同的容器。如果不kill容器，则容器会逐渐增多，比如下面这样：<img src="/2021/03/14/docker-container/1.png" alt="image.png">因此除了第一次启动容器，不建议以这种方式来启动。</p>
-</blockquote>
-<h1 id="进入容器"><a href="#进入容器" class="headerlink" title="进入容器"></a>进入容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker <span class="built_in">exec</span> -it  &lt;container <span class="built_in">id</span>&gt; /bin/bash</span><br></pre></td></tr></table></figure>
-
-<h1 id="启动和退出容器"><a href="#启动和退出容器" class="headerlink" title="启动和退出容器"></a>启动和退出容器</h1><p>在进入容器前必须先启动容器，在删除容器之前也必须要退出容器。容器是否启动还是退出可以通过<code>docker ps -a</code>来查看容器的状态。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动容器</span></span><br><span class="line">docker start  &lt;container <span class="built_in">id</span>&gt;</span><br><span class="line"><span class="comment"># 退出容器</span></span><br><span class="line">docker stop  &lt;container <span class="built_in">id</span>&gt;</span><br></pre></td></tr></table></figure>
-<h1 id="删除容器"><a href="#删除容器" class="headerlink" title="删除容器"></a>删除容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker <span class="built_in">rm</span> &lt;container_ID&gt;</span><br></pre></td></tr></table></figure>]]></content>
-      <tags>
-        <tag>docker</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Docker学习笔记——镜像image</title>
-    <url>/2021/03/13/docker-image/</url>
-    <content><![CDATA[<h1 id="查看已有的镜像信息"><a href="#查看已有的镜像信息" class="headerlink" title="查看已有的镜像信息"></a>查看已有的镜像信息</h1><p>使用命令<code>docker images</code></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker images</span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">php                 latest              fe1a2c2228f4        2 days ago          364 MB</span><br><span class="line">mongo               latest              87bde25ffc68        2 days ago          326.7 MB</span><br><span class="line">ubuntu              latest              42118e3df429        9 days ago          124.8 MB</span><br><span class="line">redis               latest              4465e4bcad80        6 weeks ago         185.7 MB</span><br><span class="line">nginx               latest              0d409d33b27e        8 weeks ago         182.8 MB</span><br></pre></td></tr></table></figure>
-<span id="more"></span>
-<h1 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h1><p>删除镜像之前要先删掉根据镜像建立的容器，然后才可以删除对应的镜像。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 删除指定id的镜像</span></span><br><span class="line">docker rmi &lt;image <span class="built_in">id</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除当前机器上的无用镜像(名称或标签为none)</span></span><br><span class="line">sudo docker images | grep <span class="string">&#x27;&lt;none&gt;&#x27;</span> | awk <span class="string">&#x27;&#123;print $3&#125;&#x27;</span>| xargs sudo docker rmi -f </span><br></pre></td></tr></table></figure>
-<h1 id="下载远程镜像"><a href="#下载远程镜像" class="headerlink" title="下载远程镜像"></a>下载远程镜像</h1><p>命令：<code>docker pull NAME[:TAG]</code></p>
-<blockquote>
-<p>不指定tag的时候默认使用:latest</p>
-</blockquote>
-<p><strong>提高下载速度的技巧</strong><br>国外的docker下载速度太慢，可以找国内阿里云的镜像之类的。<br>登录阿里云账号：在类似的路径下搜索<a href="https://cr.console.aliyun.com/cn-beijing/instances/images">https://cr.console.aliyun.com/cn-beijing/instances/images</a>，比如<br><img src="/2021/03/13/docker-image/1.png" alt="image.png"></p>
-<p>也可以配置docker加速器：<a href="https://blog.csdn.net/liu865033503/article/details/95936640">https://blog.csdn.net/liu865033503/article/details/95936640</a></p>
-<h1 id="上传镜像"><a href="#上传镜像" class="headerlink" title="上传镜像"></a>上传镜像</h1><p>命令：<code>docker push NAME[:TAG]</code></p>
-]]></content>
-      <tags>
-        <tag>docker</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Docker学习笔记——环境配置</title>
-    <url>/2021/03/12/docker-env/</url>
-    <content><![CDATA[<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>使用yum方式安装，但是首先要保证有centos的yum源，然后<code>yum install docker-ce</code></p>
-<span id="more"></span>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装centos的yum源</span></span><br><span class="line">wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装docker</span></span><br><span class="line">sudo yum install docker-ce</span><br></pre></td></tr></table></figure>
-<h1 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装完之后启动docker</span></span><br><span class="line">sudo systemctl start docker</span><br></pre></td></tr></table></figure>
-<p>踩坑1：启动docker的时候失败，<code>sudo dockerd --debug</code>查找原因<br>原因是没有network，解决方法:</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo ip <span class="built_in">link</span> add name docker0 <span class="built_in">type</span> bridge</span><br><span class="line">sudo ip addr add dev docker0 172.17.0.1/16</span><br></pre></td></tr></table></figure>
-<p>踩坑2：需要重启docker，找不到socket，更改了本机lib里的docker.socket，参考这个图中的方法.<br><img src="1.png" width="50%" height="50%"></p>
-<h1 id="路径配置"><a href="#路径配置" class="headerlink" title="路径配置"></a>路径配置</h1><p>系统默认会把docker的镜像放在<code>/var/lib/docker</code>的目录下，有时候这个目录的磁盘空间往往不会很大，当docker镜像比较多的时候，会导致磁盘空间不足，一个解决办法是将docker路径重定向到自己家目录下的本地空间，操作方式如下：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl stop docker</span><br><span class="line">ps aux | grep -i docker | grep -v grep   	<span class="comment">#查看是否完全stop了</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 移动到新的路径</span></span><br><span class="line"><span class="built_in">mv</span> /var/lib/docker  /new/path</span><br><span class="line"><span class="built_in">ln</span> -s /new/path /var/lib/docker </span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启docker</span></span><br><span class="line">systemctl start docker</span><br></pre></td></tr></table></figure>
-<h1 id="sudo权限"><a href="#sudo权限" class="headerlink" title="sudo权限"></a>sudo权限</h1><p>docker使用unix socket进行通讯，但是unix socket属于root用户，但是普通用户需要使用sudo才能开启root权限，但是普通的操作并没有root权限。可通过以下操作使docker拥有sudo权限.</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo groupadd docker</span><br><span class="line">sudo usermod -aG docker <span class="variable">$USER</span></span><br></pre></td></tr></table></figure>
-<p>如果是虚拟机，则需要reboot机器才能生效<br>如果无法reboot，那通过<code>newgrp docker</code>，使之在当前目录生效</p>
-<p>开启了sudo权限之后，可以通过vscode远程访问docker容器</p>
-]]></content>
-      <tags>
-        <tag>docker</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>算法笔记——并查集</title>
-    <url>/2017/02/28/union-find/</url>
-    <content><![CDATA[<p>刷题碰到这种问题不止一次了，总是写的磕磕绊绊。是时候总结一下了。</p>
-<span id="more"></span>
-<h1 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>并查集: 来自于——并(union)、查(find)、集(set)，是一种维护集合的数据结构。支持两种操作：</p>
-<ul>
-<li>查询操作<code>find()</code>: 判断两个元素是否在一个集合中。</li>
-<li>合并操作<code>union()</code>: 合并两个集合。</li>
-</ul>
-<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>并查集维护的集合本质上是<strong>树形结构</strong>，使用数组方式实现的。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> pre[N];  <span class="comment">//pre[i]表示元素i的父节点的下标</span></span><br></pre></td></tr></table></figure>
-<p>以这种父亲关系来表示元素所属的集合，图示如下：<br><img src="/2017/02/28/union-find/1.jpg" alt="image.png"></p>
-<p>如果<code>pre[i] == i</code>,说明元素i为该集合的根节点，同时也是<strong>所属集合的标识</strong> 。</p>
-<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>一开始的每个元素都是独立的集合。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    pre[i] = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="find操作"><a href="#find操作" class="headerlink" title="find操作"></a>find操作</h1><p>思路:<br>判断两个元素是否在同一个集合 ——&gt; 判断两个元素是否在一棵树上 ——&gt; 判断两个元素所在树的根节点是否相等。<br>接下来就是如何查找元素的集合的根节点的问题了，这个也很简单，反复寻找父节点直至<code>pre[i] == i</code>即可。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="union操作"><a href="#union操作" class="headerlink" title="union操作"></a>union操作</h1><p>合并元素a和元素b所在的集合。<br>思路：</p>
-<ol>
-<li>对于a和b两个元素，分别找到其根节点ra和rb。</li>
-<li>如果<code>ra == rb</code>，不做任何操作。</li>
-<li>否则，令<code>pre[ra] = rb</code>或者<code>pre[rb] = ra</code>。</li>
-</ol>
-<p><img src="/2017/02/28/union-find/2.jpg" alt="image.png"><br>代码描述：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">union</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ra = <span class="built_in">find</span>(a);</span><br><span class="line">    <span class="type">int</span> rb = <span class="built_in">find</span>(b);</span><br><span class="line">    <span class="keyword">if</span>(ra != rb) &#123;</span><br><span class="line">        pre[ra] = rb;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="路径压缩"><a href="#路径压缩" class="headerlink" title="路径压缩"></a>路径压缩</h1><p>上述查找函数是未经过优化的，在某种极端情况下效率很低。<br>比如：假设一个集合的元素的树形结构是一个链表。这样，当从叶子节点开始寻找根节点时，向上查询经过了集合里的每个节点，这样的效率太过低下。<br>因此，可以在找到根节点后，对此集合的元素做一次路径压缩。把经过路径上所有元素的父节点都指向根节点。如图所示：<br><img src="/2017/02/28/union-find/3.jpg" alt="image.png"></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> v = x;</span><br><span class="line">    <span class="comment">// 第一次遍历，找到根节点</span></span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];    </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 再遍历一次路径，进行路径压缩  </span></span><br><span class="line">    <span class="keyword">while</span>(pre[v] != v) &#123;</span><br><span class="line">        <span class="type">int</span> tmp = v;</span><br><span class="line">        v = pre[v];</span><br><span class="line">        pre[tmp] = x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>递归版的写法：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x == pre[x]) &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">int</span> F = find[pre[x]];</span><br><span class="line">        pre[x] = F;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>算法与刷题</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>正则表达式</title>
-    <url>/2017/02/06/regex/</url>
-    <content><![CDATA[<p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
-<span id="more"></span>
-<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
-<li><code>^</code>: 匹配字符串的开头</li>
-<li><code>$</code>: 匹配字符串的结尾</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
-
-<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
-<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
-<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
-
-<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
-<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
-<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
-</ul>
-<p>大写字母表示“非”，如：</p>
-<ul>
-<li><code>\D</code>: 匹配非数字</li>
-<li><code>\W</code>：匹配非单词字符</li>
-</ul>
-<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
-<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
-<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
-<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
-<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
-<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
-
-<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
-<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
-<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
-<li><code>.</code>：匹配单个的任意字符</li>
-<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
-<li><code>()</code>: 匹配子串</li>
-</ul>
-]]></content>
-      <categories>
-        <category>python</category>
       </categories>
   </entry>
   <entry>
@@ -380,6 +355,109 @@
 ]]></content>
       <categories>
         <category>算法与刷题</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>正则表达式</title>
+    <url>/2017/02/06/regex/</url>
+    <content><![CDATA[<p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
+<span id="more"></span>
+<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
+<li><code>^</code>: 匹配字符串的开头</li>
+<li><code>$</code>: 匹配字符串的结尾</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
+
+<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
+<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
+<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
+
+<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
+<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
+<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
+</ul>
+<p>大写字母表示“非”，如：</p>
+<ul>
+<li><code>\D</code>: 匹配非数字</li>
+<li><code>\W</code>：匹配非单词字符</li>
+</ul>
+<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
+<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
+<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
+<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
+<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
+<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
+
+<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
+<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
+<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
+<li><code>.</code>：匹配单个的任意字符</li>
+<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
+<li><code>()</code>: 匹配子串</li>
+</ul>
+]]></content>
+      <categories>
+        <category>python</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>算法笔记——并查集</title>
+    <url>/2017/02/28/union-find/</url>
+    <content><![CDATA[<p>刷题碰到这种问题不止一次了，总是写的磕磕绊绊。是时候总结一下了。</p>
+<span id="more"></span>
+<h1 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>并查集: 来自于——并(union)、查(find)、集(set)，是一种维护集合的数据结构。支持两种操作：</p>
+<ul>
+<li>查询操作<code>find()</code>: 判断两个元素是否在一个集合中。</li>
+<li>合并操作<code>union()</code>: 合并两个集合。</li>
+</ul>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>并查集维护的集合本质上是<strong>树形结构</strong>，使用数组方式实现的。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> pre[N];  <span class="comment">//pre[i]表示元素i的父节点的下标</span></span><br></pre></td></tr></table></figure>
+<p>以这种父亲关系来表示元素所属的集合，图示如下：<br><img src="/2017/02/28/union-find/1.jpg" alt="image.png"></p>
+<p>如果<code>pre[i] == i</code>,说明元素i为该集合的根节点，同时也是<strong>所属集合的标识</strong> 。</p>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>一开始的每个元素都是独立的集合。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    pre[i] = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="find操作"><a href="#find操作" class="headerlink" title="find操作"></a>find操作</h1><p>思路:<br>判断两个元素是否在同一个集合 ——&gt; 判断两个元素是否在一棵树上 ——&gt; 判断两个元素所在树的根节点是否相等。<br>接下来就是如何查找元素的集合的根节点的问题了，这个也很简单，反复寻找父节点直至<code>pre[i] == i</code>即可。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="union操作"><a href="#union操作" class="headerlink" title="union操作"></a>union操作</h1><p>合并元素a和元素b所在的集合。<br>思路：</p>
+<ol>
+<li>对于a和b两个元素，分别找到其根节点ra和rb。</li>
+<li>如果<code>ra == rb</code>，不做任何操作。</li>
+<li>否则，令<code>pre[ra] = rb</code>或者<code>pre[rb] = ra</code>。</li>
+</ol>
+<p><img src="/2017/02/28/union-find/2.jpg" alt="image.png"><br>代码描述：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">union</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ra = <span class="built_in">find</span>(a);</span><br><span class="line">    <span class="type">int</span> rb = <span class="built_in">find</span>(b);</span><br><span class="line">    <span class="keyword">if</span>(ra != rb) &#123;</span><br><span class="line">        pre[ra] = rb;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="路径压缩"><a href="#路径压缩" class="headerlink" title="路径压缩"></a>路径压缩</h1><p>上述查找函数是未经过优化的，在某种极端情况下效率很低。<br>比如：假设一个集合的元素的树形结构是一个链表。这样，当从叶子节点开始寻找根节点时，向上查询经过了集合里的每个节点，这样的效率太过低下。<br>因此，可以在找到根节点后，对此集合的元素做一次路径压缩。把经过路径上所有元素的父节点都指向根节点。如图所示：<br><img src="/2017/02/28/union-find/3.jpg" alt="image.png"></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> v = x;</span><br><span class="line">    <span class="comment">// 第一次遍历，找到根节点</span></span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];    </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 再遍历一次路径，进行路径压缩  </span></span><br><span class="line">    <span class="keyword">while</span>(pre[v] != v) &#123;</span><br><span class="line">        <span class="type">int</span> tmp = v;</span><br><span class="line">        v = pre[v];</span><br><span class="line">        pre[tmp] = x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>递归版的写法：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x == pre[x]) &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">int</span> F = find[pre[x]];</span><br><span class="line">        pre[x] = F;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>算法与刷题</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>vim配置</title>
+    <url>/2021/05/31/vim/</url>
+    <content><![CDATA[<p>稍微调教一下vim</p>
+<span id="more"></span>
+<h1 id="基本配置"><a href="#基本配置" class="headerlink" title="基本配置"></a>基本配置</h1><p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
+<p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
+
+<p>vi .vim_runtime&#x2F;vimrcs&#x2F;basic.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
+
+<p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>
+<h1 id="支持的插件"><a href="#支持的插件" class="headerlink" title="支持的插件"></a>支持的插件</h1><p>(更新中，理解了一个就更新一个)</p>
+<h2 id="ctrlp"><a href="#ctrlp" class="headerlink" title="ctrlp"></a>ctrlp</h2><p>模糊搜索插件，已经mapping到了快捷键<code>ctrl + F</code></p>
+<h2 id="nerdtree"><a href="#nerdtree" class="headerlink" title="nerdtree"></a>nerdtree</h2>]]></content>
+      <categories>
+        <category>系统配置相关</category>
       </categories>
   </entry>
 </search>
