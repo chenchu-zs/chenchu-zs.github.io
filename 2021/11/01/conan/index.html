@@ -20,27 +20,27 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Mist","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 
-  <meta name="description" content="平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。">
+  <meta name="description" content="作为C++开发者，依赖管理是个令很多人头疼的问题。由于C++能 Target 到众多的平台上，从 X86、X64 到 Arm，从 Windows、Linux 到 MacOS 甚至于嵌入式的系统中。每个平台的特点都不尽相同，甚至于相同平台使用不同编译器构建后能产生不同的 ABI。而C++语言没有官方的包管理工具，很多C++开发者都在使用不同的方式来管理依赖。 JFrog 推出的 Conan是一个相对">
 <meta property="og:type" content="article">
-<meta property="og:title" content="正则表达式">
-<meta property="og:url" content="http://example.com/2017/02/06/regex/index.html">
+<meta property="og:title" content="C++依赖管理conan">
+<meta property="og:url" content="http://example.com/2021/11/01/conan/index.html">
 <meta property="og:site_name" content="chenchu.zs&#39;s blog">
-<meta property="og:description" content="平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。">
+<meta property="og:description" content="作为C++开发者，依赖管理是个令很多人头疼的问题。由于C++能 Target 到众多的平台上，从 X86、X64 到 Arm，从 Windows、Linux 到 MacOS 甚至于嵌入式的系统中。每个平台的特点都不尽相同，甚至于相同平台使用不同编译器构建后能产生不同的 ABI。而C++语言没有官方的包管理工具，很多C++开发者都在使用不同的方式来管理依赖。 JFrog 推出的 Conan是一个相对">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2017-02-05T16:00:00.000Z">
-<meta property="article:modified_time" content="2022-04-05T09:39:32.119Z">
+<meta property="article:published_time" content="2021-11-01T10:53:43.000Z">
+<meta property="article:modified_time" content="2022-06-08T12:00:57.859Z">
 <meta property="article:author" content="Zhang Shu">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="http://example.com/2017/02/06/regex/">
+<link rel="canonical" href="http://example.com/2021/11/01/conan/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://example.com/2017/02/06/regex/","path":"2017/02/06/regex/","title":"正则表达式"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://example.com/2021/11/01/conan/","path":"2021/11/01/conan/","title":"C++依赖管理conan"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>正则表达式 | chenchu.zs's blog</title>
+<title>C++依赖管理conan | chenchu.zs's blog</title>
   
 
 
@@ -147,7 +147,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9A%E4%BD%8D%E5%8C%B9%E9%85%8D"><span class="nav-number">1.</span> <span class="nav-text">定位匹配</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8C%B9%E9%85%8D%E5%AD%97%E7%AC%A6%E8%A7%84%E5%88%99"><span class="nav-number">2.</span> <span class="nav-text">自定义匹配字符规则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AD%97%E7%AC%A6%E6%97%8F%E5%8C%B9%E9%85%8D"><span class="nav-number">3.</span> <span class="nav-text">字符族匹配</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D%E6%AC%A1%E6%95%B0"><span class="nav-number">4.</span> <span class="nav-text">匹配次数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%B4%AA%E5%A9%AA%E5%8C%B9%E9%85%8D%E5%92%8C%E9%9D%9E%E8%B4%AA%E5%A9%AA%E5%8C%B9%E9%85%8D"><span class="nav-number">5.</span> <span class="nav-text">贪婪匹配和非贪婪匹配</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%AA%E5%A9%AA%E6%A8%A1%E5%BC%8F"><span class="nav-number">5.1.</span> <span class="nav-text">贪婪模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%9E%E8%B4%AA%E5%A9%AA%E6%A8%A1%E5%BC%8F"><span class="nav-number">5.2.</span> <span class="nav-text">非贪婪模式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E8%A7%84%E5%88%99"><span class="nav-number">6.</span> <span class="nav-text">其他规则</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9F%A5%E6%89%BE%E4%BE%9D%E8%B5%96%E5%8C%85"><span class="nav-number">2.</span> <span class="nav-text">查找依赖包</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#conan%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">conan编译环境配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">基础使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%9B%E9%98%B6%E4%BD%BF%E7%94%A8"><span class="nav-number">5.</span> <span class="nav-text">进阶使用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%86%E4%BE%9D%E8%B5%96%E5%BA%93%E7%9A%84bin%E6%96%87%E4%BB%B6copy%E5%88%B0%E9%A1%B9%E7%9B%AEbuild%E7%9B%AE%E5%BD%95"><span class="nav-number">5.1.</span> <span class="nav-text">将依赖库的bin文件copy到项目build目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E4%BE%9D%E8%B5%96%E5%BA%93%E4%B8%BA%E9%9D%99%E6%80%81%E8%BF%98%E6%98%AF%E5%8A%A8%E6%80%81%E7%9A%84"><span class="nav-number">5.2.</span> <span class="nav-text">选择依赖库为静态还是动态的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E7%BC%96%E8%AF%91%E4%B8%8D%E7%AC%A6%E5%90%88%E8%A6%81%E6%B1%82%E7%9A%84%E4%BE%9D%E8%B5%96%E5%BA%93"><span class="nav-number">5.3.</span> <span class="nav-text">重新编译不符合要求的依赖库</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -217,7 +217,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2017/02/06/regex/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/11/01/conan/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -230,7 +230,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          正则表达式
+          C++依赖管理conan
         </h1>
 
         <div class="post-meta-container">
@@ -241,14 +241,14 @@
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2017-02-06 00:00:00" itemprop="dateCreated datePublished" datetime="2017-02-06T00:00:00+08:00">2017-02-06</time>
+      <time title="创建时间：2021-11-01 18:53:43" itemprop="dateCreated datePublished" datetime="2021-11-01T18:53:43+08:00">2021-11-01</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-04-05 17:39:32" itemprop="dateModified" datetime="2022-04-05T17:39:32+08:00">2022-04-05</time>
+      <time title="修改时间：2022-06-08 20:00:57" itemprop="dateModified" datetime="2022-06-08T20:00:57+08:00">2022-06-08</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -256,7 +256,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/python/" itemprop="url" rel="index"><span itemprop="name">python</span></a>
+          <a href="/categories/c/" itemprop="url" rel="index"><span itemprop="name">c++</span></a>
         </span>
     </span>
 
@@ -267,7 +267,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>980</span>
+      <span>1.3k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -285,45 +285,30 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
-<span id="more"></span>
-<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
-<li><code>^</code>: 匹配字符串的开头</li>
-<li><code>$</code>: 匹配字符串的结尾</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
-
-<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
-<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
-<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
-
-<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
-<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
-<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
-</ul>
-<p>大写字母表示“非”，如：</p>
+        <p>作为C++开发者，依赖管理是个令很多人头疼的问题。由于C++能 Target 到众多的平台上，从 X86、X64 到 Arm，从 Windows、Linux 到 MacOS 甚至于嵌入式的系统中。每个平台的特点都不尽相同，甚至于相同平台使用不同编译器构建后能产生不同的 ABI。而C++语言没有官方的包管理工具，很多C++开发者都在使用不同的方式来管理依赖。</p>
+<p>JFrog 推出的 Conan是一个相对而言比较好的包管理工具。它是一个开源的、跨平台的、去中心化的 C++ 包管理器。它的工作方式也比较简单易懂：</p>
 <ul>
-<li><code>\D</code>: 匹配非数字</li>
-<li><code>\W</code>：匹配非单词字符</li>
+<li>当向 Conan 请求安装依赖时，Conan 会拿着编译相关的配置信息去服务器请求是否有对应平台的预构建二进制包</li>
+<li>如果有，则直接下载并解压到本地的缓存仓库中</li>
+<li>否则，会执行对应的构建脚本，构建出符合当前平台的二进制包。</li>
 </ul>
-<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
-<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
-<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
-<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
-<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
-<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
-
-<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
-<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
-<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
-<li><code>.</code>：匹配单个的任意字符</li>
-<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
-<li><code>()</code>: 匹配子串</li>
-</ul>
+<p>通过这种方式就能解决c++依赖在不同版本不同平台上的问题。接下来介绍一下它的基本使用方法。</p>
+<span id="more"></span>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>通过pip方式安装</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install conan</span><br></pre></td></tr></table></figure>
+<h1 id="查找依赖包"><a href="#查找依赖包" class="headerlink" title="查找依赖包"></a>查找依赖包</h1><p>通过命令<code>conan search</code>来查找，-r可以指定查找的源。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加remote源，默认是官方源，也可以添加自己的源</span></span><br><span class="line">conan remote add conancenter https://center.conan.io</span><br><span class="line"><span class="comment"># 查找依赖源中有没有需要的依赖包</span></span><br><span class="line">conan search zlib -r conancenter</span><br></pre></td></tr></table></figure>
+<h1 id="conan编译环境配置"><a href="#conan编译环境配置" class="headerlink" title="conan编译环境配置"></a>conan编译环境配置</h1><p>个人比较习惯直接编辑配置文件<code>~/.conan/profiles/default</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[settings]</span><br><span class="line">os=Linux</span><br><span class="line">os_build=Linux</span><br><span class="line">arch=x86_64</span><br><span class="line">arch_build=x86_64</span><br><span class="line">compiler=gcc</span><br><span class="line">compiler.version=7</span><br><span class="line">compiler.libcxx=libstdc++11</span><br><span class="line">build_type=Release</span><br><span class="line">[options]</span><br><span class="line">[build_requires]</span><br><span class="line">[env]</span><br></pre></td></tr></table></figure>
+<h1 id="基础使用"><a href="#基础使用" class="headerlink" title="基础使用"></a>基础使用</h1><ol>
+<li>在项目里创建<code>conanfile.txt</code>文件。格式类似如下： <figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[requires]</span><br><span class="line">  protobuf/3.17.1</span><br><span class="line">  dlpack/0.4</span><br><span class="line">[generators]</span><br><span class="line">  cmake</span><br><span class="line">  cmake_find_package</span><br></pre></td></tr></table></figure></li>
+<li>通过以下命令下载依赖包：<code>conan install &lt;path_of_conanfile&gt;</code></li>
+<li>在<code>CMakeLists.txt</code>中添加以下几行 <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3rd dependency</span></span><br><span class="line"><span class="keyword">include</span>(<span class="variable">$&#123;CMAKE_BINARY_DIR&#125;</span>/conanbuildinfo.cmake)</span><br><span class="line">conan_basic_setup()</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h1 id="进阶使用"><a href="#进阶使用" class="headerlink" title="进阶使用"></a>进阶使用</h1><h2 id="将依赖库的bin文件copy到项目build目录"><a href="#将依赖库的bin文件copy到项目build目录" class="headerlink" title="将依赖库的bin文件copy到项目build目录"></a>将依赖库的bin文件copy到项目build目录</h2><p>主要是protobuf依赖的protoc遇到了这个问题。在conanfile.txt中添加以下几行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[imports]</span><br><span class="line">  bin, * -&gt; ./bin</span><br></pre></td></tr></table></figure>
+<h2 id="选择依赖库为静态还是动态的"><a href="#选择依赖库为静态还是动态的" class="headerlink" title="选择依赖库为静态还是动态的"></a>选择依赖库为静态还是动态的</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[options]</span><br><span class="line">  protobuf:shared=False</span><br></pre></td></tr></table></figure>
+<h2 id="重新编译不符合要求的依赖库"><a href="#重新编译不符合要求的依赖库" class="headerlink" title="重新编译不符合要求的依赖库"></a>重新编译不符合要求的依赖库</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">conan install &lt;path_of_conanfile&gt; -b &lt;package&gt;</span><br><span class="line">conan install &lt;path_of_conanfile&gt; --build=missing</span><br></pre></td></tr></table></figure>
 
     </div>
 
@@ -337,13 +322,13 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2017/01/30/permutation/" rel="prev" title="算法总结之——排列组合问题">
-                  <i class="fa fa-chevron-left"></i> 算法总结之——排列组合问题
+                <a href="/2021/05/31/linux-config/" rel="prev" title="linux环境基本配置">
+                  <i class="fa fa-chevron-left"></i> linux环境基本配置
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2017/02/28/union-find/" rel="next" title="算法笔记——并查集">
-                  算法笔记——并查集 <i class="fa fa-chevron-right"></i>
+                <a href="/2022/02/20/2017-2022/" rel="next" title="2017-2022 重新捡起博客">
+                  2017-2022 重新捡起博客 <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>

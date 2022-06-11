@@ -95,6 +95,87 @@
       </categories>
   </entry>
   <entry>
+    <title>C++依赖管理conan</title>
+    <url>/2021/11/01/conan/</url>
+    <content><![CDATA[<p>作为C++开发者，依赖管理是个令很多人头疼的问题。由于C++能 Target 到众多的平台上，从 X86、X64 到 Arm，从 Windows、Linux 到 MacOS 甚至于嵌入式的系统中。每个平台的特点都不尽相同，甚至于相同平台使用不同编译器构建后能产生不同的 ABI。而C++语言没有官方的包管理工具，很多C++开发者都在使用不同的方式来管理依赖。</p>
+<p>JFrog 推出的 Conan是一个相对而言比较好的包管理工具。它是一个开源的、跨平台的、去中心化的 C++ 包管理器。它的工作方式也比较简单易懂：</p>
+<ul>
+<li>当向 Conan 请求安装依赖时，Conan 会拿着编译相关的配置信息去服务器请求是否有对应平台的预构建二进制包</li>
+<li>如果有，则直接下载并解压到本地的缓存仓库中</li>
+<li>否则，会执行对应的构建脚本，构建出符合当前平台的二进制包。</li>
+</ul>
+<p>通过这种方式就能解决c++依赖在不同版本不同平台上的问题。接下来介绍一下它的基本使用方法。</p>
+<span id="more"></span>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>通过pip方式安装</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pip install conan</span><br></pre></td></tr></table></figure>
+<h1 id="查找依赖包"><a href="#查找依赖包" class="headerlink" title="查找依赖包"></a>查找依赖包</h1><p>通过命令<code>conan search</code>来查找，-r可以指定查找的源。</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 添加remote源，默认是官方源，也可以添加自己的源</span></span><br><span class="line">conan remote add conancenter https://center.conan.io</span><br><span class="line"><span class="comment"># 查找依赖源中有没有需要的依赖包</span></span><br><span class="line">conan search zlib -r conancenter</span><br></pre></td></tr></table></figure>
+<h1 id="conan编译环境配置"><a href="#conan编译环境配置" class="headerlink" title="conan编译环境配置"></a>conan编译环境配置</h1><p>个人比较习惯直接编辑配置文件<code>~/.conan/profiles/default</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[settings]</span><br><span class="line">os=Linux</span><br><span class="line">os_build=Linux</span><br><span class="line">arch=x86_64</span><br><span class="line">arch_build=x86_64</span><br><span class="line">compiler=gcc</span><br><span class="line">compiler.version=7</span><br><span class="line">compiler.libcxx=libstdc++11</span><br><span class="line">build_type=Release</span><br><span class="line">[options]</span><br><span class="line">[build_requires]</span><br><span class="line">[env]</span><br></pre></td></tr></table></figure>
+<h1 id="基础使用"><a href="#基础使用" class="headerlink" title="基础使用"></a>基础使用</h1><ol>
+<li>在项目里创建<code>conanfile.txt</code>文件。格式类似如下： <figure class="highlight txt"><table><tr><td class="code"><pre><span class="line">[requires]</span><br><span class="line">  protobuf/3.17.1</span><br><span class="line">  dlpack/0.4</span><br><span class="line">[generators]</span><br><span class="line">  cmake</span><br><span class="line">  cmake_find_package</span><br></pre></td></tr></table></figure></li>
+<li>通过以下命令下载依赖包：<code>conan install &lt;path_of_conanfile&gt;</code></li>
+<li>在<code>CMakeLists.txt</code>中添加以下几行 <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 3rd dependency</span></span><br><span class="line"><span class="keyword">include</span>(<span class="variable">$&#123;CMAKE_BINARY_DIR&#125;</span>/conanbuildinfo.cmake)</span><br><span class="line">conan_basic_setup()</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h1 id="进阶使用"><a href="#进阶使用" class="headerlink" title="进阶使用"></a>进阶使用</h1><h2 id="将依赖库的bin文件copy到项目build目录"><a href="#将依赖库的bin文件copy到项目build目录" class="headerlink" title="将依赖库的bin文件copy到项目build目录"></a>将依赖库的bin文件copy到项目build目录</h2><p>主要是protobuf依赖的protoc遇到了这个问题。在conanfile.txt中添加以下几行</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[imports]</span><br><span class="line">  bin, * -&gt; ./bin</span><br></pre></td></tr></table></figure>
+<h2 id="选择依赖库为静态还是动态的"><a href="#选择依赖库为静态还是动态的" class="headerlink" title="选择依赖库为静态还是动态的"></a>选择依赖库为静态还是动态的</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[options]</span><br><span class="line">  protobuf:shared=False</span><br></pre></td></tr></table></figure>
+<h2 id="重新编译不符合要求的依赖库"><a href="#重新编译不符合要求的依赖库" class="headerlink" title="重新编译不符合要求的依赖库"></a>重新编译不符合要求的依赖库</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">conan install &lt;path_of_conanfile&gt; -b &lt;package&gt;</span><br><span class="line">conan install &lt;path_of_conanfile&gt; --build=missing</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>c++</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>linux环境基本配置</title>
+    <url>/2021/05/31/linux-config/</url>
+    <content><![CDATA[<p>个人比较习惯的一些命令行和终端配置，留在博客里方便以后复制粘贴。</p>
+<span id="more"></span>
+<p>终端我一般用bash或者zsh，bash经常是在公司里使用的，zsh就在自己机器上用</p>
+<h1 id="bashrc配置"><a href="#bashrc配置" class="headerlink" title="bashrc配置"></a>bashrc配置</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#设置终端主题，支持显示git分支</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">git_branch_prompt</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">local</span> branch=$(git symbolic-ref --short -q HEAD 2&gt;/dev/null)</span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$branch</span> ]; <span class="keyword">then</span> <span class="built_in">echo</span> <span class="string">&quot;|<span class="variable">$branch</span>&quot;</span>; <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> PS1=<span class="string">&quot;\[\033[01;36m\]\u@\[\033[01;33m\]\h.<span class="variable">$add</span> \[\033[0;36m\]\w\[\033[0;32m\]\$(git_branch_prompt)\[\033[37;36m\]\\$ \[\033[00m\]&quot;</span></span><br><span class="line"><span class="comment"># 修改指令避免不可挽回的删除</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">mv</span>=<span class="string">&quot;mv -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">cp</span>=<span class="string">&quot;cp -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">rm</span>=<span class="string">&quot;rm -i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动打印当前scp路径</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">sloc</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    myname=`hostname`</span><br><span class="line">    myuser=`<span class="built_in">whoami</span>`</span><br><span class="line">    mypath=`<span class="built_in">pwd</span>`</span><br><span class="line">    <span class="keyword">for</span> arg <span class="keyword">in</span> <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="variable">$myuser</span><span class="string">&quot;@&quot;</span><span class="variable">$myname</span><span class="string">&quot;:&quot;</span><span class="variable">$mypath</span><span class="string">&quot;/&quot;</span><span class="variable">$arg</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># export PS1=&quot;\[\e[37m\][\[\e[32m\]\u@\[\e[35m\]\h. \[\e[34m\]\w\[\e[32m\]\$(git_branch_prompt)\[\e[37m\]]\[\e[0m\]\\$ &quot;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>主要是命令行样式的修改看心情，PS1的颜色修改见下图</p>
+</blockquote>
+<!-- ![image.png](1.png) -->
+<img src="1.png" width="50%" height="50%">
+
+<h1 id="zsh配置"><a href="#zsh配置" class="headerlink" title="zsh配置"></a>zsh配置</h1><ol>
+<li>安装<code>oh-my-zsh</code></li>
+<li>在<code>.zshrc</code>中修改字段<code>ZSH_THEME=&quot;pygmalion&quot;</code></li>
+</ol>
+<h1 id="inputrc配置"><a href="#inputrc配置" class="headerlink" title="inputrc配置"></a>inputrc配置</h1><p>只需要在bash里配置（zsh自带），避免了通过<code>ctrl + r</code>来搜索历史命令的麻烦</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot;\e[A&quot;: history-search-backward</span><br><span class="line">&quot;\e[B&quot;: history-search-forward</span><br><span class="line">set show-all-if-ambiguous on</span><br><span class="line">set completion-ignore-case on</span><br></pre></td></tr></table></figure>
+
+<h1 id="ssh配置"><a href="#ssh配置" class="headerlink" title="ssh配置"></a>ssh配置</h1><p>给需要链接的远程服务器做个简单配置。编辑<code>.ssh/config</code>, 如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host 255.255.255.255</span><br><span class="line">HostName fake_server</span><br><span class="line">User chenchu.zs</span><br><span class="line">Port 8088</span><br></pre></td></tr></table></figure>
+<p>有时候远程服务器长时间没有操作会自动把你踢下来，配置一下自动重连和记忆功能，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host *</span><br><span class="line">    ControlMaster auto</span><br><span class="line">    ControlPath /tmp/ssh_connection_%h_%p_%r.sock</span><br><span class="line">    ServerAliveInterval 80</span><br><span class="line">    ServerAliveCountMax 6</span><br><span class="line">    ForwardAgent yes</span><br><span class="line">    CheckHostIP no</span><br><span class="line">    Compression yes</span><br><span class="line">    ControlPersist 72h</span><br><span class="line">    StrictHostKeyChecking=no</span><br><span class="line">    GSSAPIAuthentication=no</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>系统配置相关</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>vim配置</title>
+    <url>/2021/05/31/vim/</url>
+    <content><![CDATA[<p>稍微调教一下vim</p>
+<span id="more"></span>
+<h1 id="基本配置"><a href="#基本配置" class="headerlink" title="基本配置"></a>基本配置</h1><p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
+<p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
+
+<p>vi .vim_runtime&#x2F;vimrcs&#x2F;basic.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
+
+<p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>
+<h1 id="支持的插件"><a href="#支持的插件" class="headerlink" title="支持的插件"></a>支持的插件</h1><p>(更新中，理解了一个就更新一个)</p>
+<h2 id="ctrlp"><a href="#ctrlp" class="headerlink" title="ctrlp"></a>ctrlp</h2><p>模糊搜索插件，已经mapping到了快捷键<code>ctrl + F</code></p>
+<h2 id="nerdtree"><a href="#nerdtree" class="headerlink" title="nerdtree"></a>nerdtree</h2>]]></content>
+      <categories>
+        <category>系统配置相关</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Docker学习笔记——容器container</title>
     <url>/2021/03/14/docker-container/</url>
     <content><![CDATA[<h1 id="查看本机已有的容器"><a href="#查看本机已有的容器" class="headerlink" title="查看本机已有的容器"></a>查看本机已有的容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看本机所有的容器</span></span><br><span class="line">docker ps -a</span><br><span class="line"><span class="comment"># 查看本机正在运行的容器</span></span><br><span class="line">docker ps</span><br></pre></td></tr></table></figure>
@@ -121,6 +202,26 @@
       </categories>
   </entry>
   <entry>
+    <title>Docker学习笔记——镜像image</title>
+    <url>/2021/03/13/docker-image/</url>
+    <content><![CDATA[<h1 id="查看已有的镜像信息"><a href="#查看已有的镜像信息" class="headerlink" title="查看已有的镜像信息"></a>查看已有的镜像信息</h1><p>使用命令<code>docker images</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker images</span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">php                 latest              fe1a2c2228f4        2 days ago          364 MB</span><br><span class="line">mongo               latest              87bde25ffc68        2 days ago          326.7 MB</span><br><span class="line">ubuntu              latest              42118e3df429        9 days ago          124.8 MB</span><br><span class="line">redis               latest              4465e4bcad80        6 weeks ago         185.7 MB</span><br><span class="line">nginx               latest              0d409d33b27e        8 weeks ago         182.8 MB</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h1 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h1><p>删除镜像之前要先删掉根据镜像建立的容器，然后才可以删除对应的镜像。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 删除指定id的镜像</span></span><br><span class="line">docker rmi &lt;image <span class="built_in">id</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除当前机器上的无用镜像(名称或标签为none)</span></span><br><span class="line">sudo docker images | grep <span class="string">&#x27;&lt;none&gt;&#x27;</span> | awk <span class="string">&#x27;&#123;print $3&#125;&#x27;</span>| xargs sudo docker rmi -f </span><br></pre></td></tr></table></figure>
+<h1 id="下载远程镜像"><a href="#下载远程镜像" class="headerlink" title="下载远程镜像"></a>下载远程镜像</h1><p>命令：<code>docker pull NAME[:TAG]</code></p>
+<blockquote>
+<p>不指定tag的时候默认使用:latest</p>
+</blockquote>
+<p><strong>提高下载速度的技巧</strong><br>国外的docker下载速度太慢，可以找国内阿里云的镜像之类的。<br>登录阿里云账号：在类似的路径下搜索<a href="https://cr.console.aliyun.com/cn-beijing/instances/images">https://cr.console.aliyun.com/cn-beijing/instances/images</a>，比如<br><img src="/2021/03/13/docker-image/1.png" alt="image.png"></p>
+<p>也可以配置docker加速器：<a href="https://blog.csdn.net/liu865033503/article/details/95936640">https://blog.csdn.net/liu865033503/article/details/95936640</a></p>
+<h1 id="上传镜像"><a href="#上传镜像" class="headerlink" title="上传镜像"></a>上传镜像</h1><p>命令：<code>docker push NAME[:TAG]</code></p>
+]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Docker学习笔记——环境配置</title>
     <url>/2021/03/12/docker-env/</url>
     <content><![CDATA[<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>使用yum方式安装，但是首先要保证有centos的yum源，然后<code>yum install docker-ce</code></p>
@@ -142,23 +243,12 @@
       </categories>
   </entry>
   <entry>
-    <title>Docker学习笔记——镜像image</title>
-    <url>/2021/03/13/docker-image/</url>
-    <content><![CDATA[<h1 id="查看已有的镜像信息"><a href="#查看已有的镜像信息" class="headerlink" title="查看已有的镜像信息"></a>查看已有的镜像信息</h1><p>使用命令<code>docker images</code></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker images</span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">php                 latest              fe1a2c2228f4        2 days ago          364 MB</span><br><span class="line">mongo               latest              87bde25ffc68        2 days ago          326.7 MB</span><br><span class="line">ubuntu              latest              42118e3df429        9 days ago          124.8 MB</span><br><span class="line">redis               latest              4465e4bcad80        6 weeks ago         185.7 MB</span><br><span class="line">nginx               latest              0d409d33b27e        8 weeks ago         182.8 MB</span><br></pre></td></tr></table></figure>
-<span id="more"></span>
-<h1 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h1><p>删除镜像之前要先删掉根据镜像建立的容器，然后才可以删除对应的镜像。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 删除指定id的镜像</span></span><br><span class="line">docker rmi &lt;image <span class="built_in">id</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除当前机器上的无用镜像(名称或标签为none)</span></span><br><span class="line">sudo docker images | grep <span class="string">&#x27;&lt;none&gt;&#x27;</span> | awk <span class="string">&#x27;&#123;print $3&#125;&#x27;</span>| xargs sudo docker rmi -f </span><br></pre></td></tr></table></figure>
-<h1 id="下载远程镜像"><a href="#下载远程镜像" class="headerlink" title="下载远程镜像"></a>下载远程镜像</h1><p>命令：<code>docker pull NAME[:TAG]</code></p>
-<blockquote>
-<p>不指定tag的时候默认使用:latest</p>
-</blockquote>
-<p><strong>提高下载速度的技巧</strong><br>国外的docker下载速度太慢，可以找国内阿里云的镜像之类的。<br>登录阿里云账号：在类似的路径下搜索<a href="https://cr.console.aliyun.com/cn-beijing/instances/images">https://cr.console.aliyun.com/cn-beijing/instances/images</a>，比如<br><img src="/2021/03/13/docker-image/1.png" alt="image.png"></p>
-<p>也可以配置docker加速器：<a href="https://blog.csdn.net/liu865033503/article/details/95936640">https://blog.csdn.net/liu865033503/article/details/95936640</a></p>
-<h1 id="上传镜像"><a href="#上传镜像" class="headerlink" title="上传镜像"></a>上传镜像</h1><p>命令：<code>docker push NAME[:TAG]</code></p>
-]]></content>
+    <title>Python包的构建与分发——setup.py</title>
+    <url>/2020/10/09/python-setup/</url>
+    <content><![CDATA[<p>python项目中必然要用到setup.py来构建包，在这里总结以下它的使用方式。</p>
+<span id="more"></span>]]></content>
       <categories>
-        <category>docker</category>
+        <category>python</category>
       </categories>
   </entry>
   <entry>
@@ -233,38 +323,92 @@
 <h2 id="gdb-attach"><a href="#gdb-attach" class="headerlink" title="gdb attach"></a>gdb attach</h2><p>attach到进程上然后调试</p>
 ]]></content>
       <categories>
-        <category>工具使用</category>
+        <category>c++</category>
       </categories>
       <tags>
-        <tag>c++</tag>
+        <tag>工具使用</tag>
       </tags>
   </entry>
   <entry>
-    <title>linux环境基本配置</title>
-    <url>/2022/04/07/linux-config/</url>
-    <content><![CDATA[<p>个人比较习惯的一些命令行和终端配置，留在博客里方便以后复制粘贴。</p>
+    <title>算法笔记——并查集</title>
+    <url>/2017/02/28/union-find/</url>
+    <content><![CDATA[<p>刷题碰到这种问题不止一次了，总是写的磕磕绊绊。是时候总结一下了。</p>
 <span id="more"></span>
-<p>终端我一般用bash或者zsh，bash经常是在公司里使用的，zsh就在自己机器上用</p>
-<h1 id="bashrc配置"><a href="#bashrc配置" class="headerlink" title="bashrc配置"></a>bashrc配置</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#设置终端主题，支持显示git分支</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">git_branch_prompt</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">local</span> branch=$(git symbolic-ref --short -q HEAD 2&gt;/dev/null)</span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$branch</span> ]; <span class="keyword">then</span> <span class="built_in">echo</span> <span class="string">&quot;|<span class="variable">$branch</span>&quot;</span>; <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> PS1=<span class="string">&quot;\[\033[01;36m\]\u@\[\033[01;33m\]\h.<span class="variable">$add</span> \[\033[0;36m\]\w\[\033[0;32m\]\$(git_branch_prompt)\[\033[37;36m\]\\$ \[\033[00m\]&quot;</span></span><br><span class="line"><span class="comment"># 修改指令避免不可挽回的删除</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">mv</span>=<span class="string">&quot;mv -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">cp</span>=<span class="string">&quot;cp -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">rm</span>=<span class="string">&quot;rm -i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动打印当前scp路径</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">sloc</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    myname=`hostname`</span><br><span class="line">    myuser=`<span class="built_in">whoami</span>`</span><br><span class="line">    mypath=`<span class="built_in">pwd</span>`</span><br><span class="line">    <span class="keyword">for</span> arg <span class="keyword">in</span> <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="variable">$myuser</span><span class="string">&quot;@&quot;</span><span class="variable">$myname</span><span class="string">&quot;:&quot;</span><span class="variable">$mypath</span><span class="string">&quot;/&quot;</span><span class="variable">$arg</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># export PS1=&quot;\[\e[37m\][\[\e[32m\]\u@\[\e[35m\]\h. \[\e[34m\]\w\[\e[32m\]\$(git_branch_prompt)\[\e[37m\]]\[\e[0m\]\\$ &quot;</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>主要是命令行样式的修改看心情，PS1的颜色修改见下图</p>
-</blockquote>
-<!-- ![image.png](1.png) -->
-<img src="1.png" width="50%" height="50%">
-
-<h1 id="zsh配置"><a href="#zsh配置" class="headerlink" title="zsh配置"></a>zsh配置</h1><ol>
-<li>安装<code>oh-my-zsh</code></li>
-<li>在<code>.zshrc</code>中修改字段<code>ZSH_THEME=&quot;pygmalion&quot;</code></li>
+<h1 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>并查集: 来自于——并(union)、查(find)、集(set)，是一种维护集合的数据结构。支持两种操作：</p>
+<ul>
+<li>查询操作<code>find()</code>: 判断两个元素是否在一个集合中。</li>
+<li>合并操作<code>union()</code>: 合并两个集合。</li>
+</ul>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>并查集维护的集合本质上是<strong>树形结构</strong>，使用数组方式实现的。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> pre[N];  <span class="comment">//pre[i]表示元素i的父节点的下标</span></span><br></pre></td></tr></table></figure>
+<p>以这种父亲关系来表示元素所属的集合，图示如下：<br><img src="/2017/02/28/union-find/1.jpg" alt="image.png"></p>
+<p>如果<code>pre[i] == i</code>,说明元素i为该集合的根节点，同时也是<strong>所属集合的标识</strong> 。</p>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>一开始的每个元素都是独立的集合。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    pre[i] = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="find操作"><a href="#find操作" class="headerlink" title="find操作"></a>find操作</h1><p>思路:<br>判断两个元素是否在同一个集合 ——&gt; 判断两个元素是否在一棵树上 ——&gt; 判断两个元素所在树的根节点是否相等。<br>接下来就是如何查找元素的集合的根节点的问题了，这个也很简单，反复寻找父节点直至<code>pre[i] == i</code>即可。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="union操作"><a href="#union操作" class="headerlink" title="union操作"></a>union操作</h1><p>合并元素a和元素b所在的集合。<br>思路：</p>
+<ol>
+<li>对于a和b两个元素，分别找到其根节点ra和rb。</li>
+<li>如果<code>ra == rb</code>，不做任何操作。</li>
+<li>否则，令<code>pre[ra] = rb</code>或者<code>pre[rb] = ra</code>。</li>
 </ol>
-<h1 id="inputrc配置"><a href="#inputrc配置" class="headerlink" title="inputrc配置"></a>inputrc配置</h1><p>只需要在bash里配置（zsh自带），避免了通过<code>ctrl + r</code>来搜索历史命令的麻烦</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot;\e[A&quot;: history-search-backward</span><br><span class="line">&quot;\e[B&quot;: history-search-forward</span><br><span class="line">set show-all-if-ambiguous on</span><br><span class="line">set completion-ignore-case on</span><br></pre></td></tr></table></figure>
-
-<h1 id="ssh配置"><a href="#ssh配置" class="headerlink" title="ssh配置"></a>ssh配置</h1><p>给需要链接的远程服务器做个简单配置。编辑<code>.ssh/config</code>, 如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host 255.255.255.255</span><br><span class="line">HostName fake_server</span><br><span class="line">User chenchu.zs</span><br><span class="line">Port 8088</span><br></pre></td></tr></table></figure>
-<p>有时候远程服务器长时间没有操作会自动把你踢下来，配置一下自动重连和记忆功能，如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host *</span><br><span class="line">    ControlMaster auto</span><br><span class="line">    ControlPath /tmp/ssh_connection_%h_%p_%r.sock</span><br><span class="line">    ServerAliveInterval 80</span><br><span class="line">    ServerAliveCountMax 6</span><br><span class="line">    ForwardAgent yes</span><br><span class="line">    CheckHostIP no</span><br><span class="line">    Compression yes</span><br><span class="line">    ControlPersist 72h</span><br><span class="line">    StrictHostKeyChecking=no</span><br><span class="line">    GSSAPIAuthentication=no</span><br></pre></td></tr></table></figure>]]></content>
+<p><img src="/2017/02/28/union-find/2.jpg" alt="image.png"><br>代码描述：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">union</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ra = <span class="built_in">find</span>(a);</span><br><span class="line">    <span class="type">int</span> rb = <span class="built_in">find</span>(b);</span><br><span class="line">    <span class="keyword">if</span>(ra != rb) &#123;</span><br><span class="line">        pre[ra] = rb;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="路径压缩"><a href="#路径压缩" class="headerlink" title="路径压缩"></a>路径压缩</h1><p>上述查找函数是未经过优化的，在某种极端情况下效率很低。<br>比如：假设一个集合的元素的树形结构是一个链表。这样，当从叶子节点开始寻找根节点时，向上查询经过了集合里的每个节点，这样的效率太过低下。<br>因此，可以在找到根节点后，对此集合的元素做一次路径压缩。把经过路径上所有元素的父节点都指向根节点。如图所示：<br><img src="/2017/02/28/union-find/3.jpg" alt="image.png"></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> v = x;</span><br><span class="line">    <span class="comment">// 第一次遍历，找到根节点</span></span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];    </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 再遍历一次路径，进行路径压缩  </span></span><br><span class="line">    <span class="keyword">while</span>(pre[v] != v) &#123;</span><br><span class="line">        <span class="type">int</span> tmp = v;</span><br><span class="line">        v = pre[v];</span><br><span class="line">        pre[tmp] = x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>递归版的写法：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x == pre[x]) &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">int</span> F = find[pre[x]];</span><br><span class="line">        pre[x] = F;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
       <categories>
-        <category>系统配置相关</category>
+        <category>算法与刷题</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>正则表达式</title>
+    <url>/2017/02/06/regex/</url>
+    <content><![CDATA[<p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
+<span id="more"></span>
+<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
+<li><code>^</code>: 匹配字符串的开头</li>
+<li><code>$</code>: 匹配字符串的结尾</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
+
+<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
+<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
+<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
+
+<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
+<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
+<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
+</ul>
+<p>大写字母表示“非”，如：</p>
+<ul>
+<li><code>\D</code>: 匹配非数字</li>
+<li><code>\W</code>：匹配非单词字符</li>
+</ul>
+<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
+<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
+<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
+<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
+<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
+<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
+
+<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
+<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
+<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
+<li><code>.</code>：匹配单个的任意字符</li>
+<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
+<li><code>()</code>: 匹配子串</li>
+</ul>
+]]></content>
+      <categories>
+        <category>python</category>
       </categories>
   </entry>
   <entry>
@@ -355,109 +499,6 @@
 ]]></content>
       <categories>
         <category>算法与刷题</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>正则表达式</title>
-    <url>/2017/02/06/regex/</url>
-    <content><![CDATA[<p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
-<span id="more"></span>
-<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
-<li><code>^</code>: 匹配字符串的开头</li>
-<li><code>$</code>: 匹配字符串的结尾</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
-
-<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
-<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
-<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
-
-<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
-<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
-<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
-</ul>
-<p>大写字母表示“非”，如：</p>
-<ul>
-<li><code>\D</code>: 匹配非数字</li>
-<li><code>\W</code>：匹配非单词字符</li>
-</ul>
-<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
-<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
-<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
-<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
-<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
-<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
-
-<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
-<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
-<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
-<li><code>.</code>：匹配单个的任意字符</li>
-<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
-<li><code>()</code>: 匹配子串</li>
-</ul>
-]]></content>
-      <categories>
-        <category>python</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>算法笔记——并查集</title>
-    <url>/2017/02/28/union-find/</url>
-    <content><![CDATA[<p>刷题碰到这种问题不止一次了，总是写的磕磕绊绊。是时候总结一下了。</p>
-<span id="more"></span>
-<h1 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>并查集: 来自于——并(union)、查(find)、集(set)，是一种维护集合的数据结构。支持两种操作：</p>
-<ul>
-<li>查询操作<code>find()</code>: 判断两个元素是否在一个集合中。</li>
-<li>合并操作<code>union()</code>: 合并两个集合。</li>
-</ul>
-<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>并查集维护的集合本质上是<strong>树形结构</strong>，使用数组方式实现的。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> pre[N];  <span class="comment">//pre[i]表示元素i的父节点的下标</span></span><br></pre></td></tr></table></figure>
-<p>以这种父亲关系来表示元素所属的集合，图示如下：<br><img src="/2017/02/28/union-find/1.jpg" alt="image.png"></p>
-<p>如果<code>pre[i] == i</code>,说明元素i为该集合的根节点，同时也是<strong>所属集合的标识</strong> 。</p>
-<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>一开始的每个元素都是独立的集合。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    pre[i] = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="find操作"><a href="#find操作" class="headerlink" title="find操作"></a>find操作</h1><p>思路:<br>判断两个元素是否在同一个集合 ——&gt; 判断两个元素是否在一棵树上 ——&gt; 判断两个元素所在树的根节点是否相等。<br>接下来就是如何查找元素的集合的根节点的问题了，这个也很简单，反复寻找父节点直至<code>pre[i] == i</code>即可。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="union操作"><a href="#union操作" class="headerlink" title="union操作"></a>union操作</h1><p>合并元素a和元素b所在的集合。<br>思路：</p>
-<ol>
-<li>对于a和b两个元素，分别找到其根节点ra和rb。</li>
-<li>如果<code>ra == rb</code>，不做任何操作。</li>
-<li>否则，令<code>pre[ra] = rb</code>或者<code>pre[rb] = ra</code>。</li>
-</ol>
-<p><img src="/2017/02/28/union-find/2.jpg" alt="image.png"><br>代码描述：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">union</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ra = <span class="built_in">find</span>(a);</span><br><span class="line">    <span class="type">int</span> rb = <span class="built_in">find</span>(b);</span><br><span class="line">    <span class="keyword">if</span>(ra != rb) &#123;</span><br><span class="line">        pre[ra] = rb;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="路径压缩"><a href="#路径压缩" class="headerlink" title="路径压缩"></a>路径压缩</h1><p>上述查找函数是未经过优化的，在某种极端情况下效率很低。<br>比如：假设一个集合的元素的树形结构是一个链表。这样，当从叶子节点开始寻找根节点时，向上查询经过了集合里的每个节点，这样的效率太过低下。<br>因此，可以在找到根节点后，对此集合的元素做一次路径压缩。把经过路径上所有元素的父节点都指向根节点。如图所示：<br><img src="/2017/02/28/union-find/3.jpg" alt="image.png"></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> v = x;</span><br><span class="line">    <span class="comment">// 第一次遍历，找到根节点</span></span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];    </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 再遍历一次路径，进行路径压缩  </span></span><br><span class="line">    <span class="keyword">while</span>(pre[v] != v) &#123;</span><br><span class="line">        <span class="type">int</span> tmp = v;</span><br><span class="line">        v = pre[v];</span><br><span class="line">        pre[tmp] = x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>递归版的写法：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x == pre[x]) &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">int</span> F = find[pre[x]];</span><br><span class="line">        pre[x] = F;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>算法与刷题</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>vim配置</title>
-    <url>/2021/05/31/vim/</url>
-    <content><![CDATA[<p>稍微调教一下vim</p>
-<span id="more"></span>
-<h1 id="基本配置"><a href="#基本配置" class="headerlink" title="基本配置"></a>基本配置</h1><p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
-<p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
-
-<p>vi .vim_runtime&#x2F;vimrcs&#x2F;basic.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
-
-<p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>
-<h1 id="支持的插件"><a href="#支持的插件" class="headerlink" title="支持的插件"></a>支持的插件</h1><p>(更新中，理解了一个就更新一个)</p>
-<h2 id="ctrlp"><a href="#ctrlp" class="headerlink" title="ctrlp"></a>ctrlp</h2><p>模糊搜索插件，已经mapping到了快捷键<code>ctrl + F</code></p>
-<h2 id="nerdtree"><a href="#nerdtree" class="headerlink" title="nerdtree"></a>nerdtree</h2>]]></content>
-      <categories>
-        <category>系统配置相关</category>
       </categories>
   </entry>
 </search>
