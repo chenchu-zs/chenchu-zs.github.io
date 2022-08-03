@@ -80,10 +80,10 @@
 <h2 id="部署到git-page"><a href="#部署到git-page" class="headerlink" title="部署到git page"></a>部署到git page</h2><p>首先安装git部署插件:</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
 <p>修改<code>_config.yml</code>的deploy字段（文件的注释中有相应的教程文档），我的配置如下：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">&#x27;git&#x27;</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://gitee.com/chenchu-zs/chenchu-zs</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">&#x27;git&#x27;</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://github.com/chenchu-zs/chenchu-zs</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
 <p>修改完之后执行以下命令</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
-<p>这里要说一下，之前的博客我用的是github page，但是由于github访问太慢，时不时抽风404，最终决定切换到国内的gitee，国产平台真香，新建仓库时可以使用各种模板，还能创建免费的私有库，非常好用啊~</p>
+<h3 id="gitee-page镜像"><a href="#gitee-page镜像" class="headerlink" title="gitee page镜像"></a>gitee page镜像</h3><p>github的站点在美国，经常出现访问速度过慢或者网页打不开的情况，所以可以使用国内的git平台来加快启动。<br>曾经我直接把git指定为gitee的仓库并启用了gitee page，但是gitee的page服务不能自动更新，最终又切回到github了。<br>这里要说一下，之前的博客我用的是github page，但是由于github访问太慢，时不时抽风404，最终决定切换到国内的gitee，国产平台真香，新建仓库时可以使用各种模板，还能创建免费的私有库，非常好用啊~</p>
 <h1 id="五年回顾"><a href="#五年回顾" class="headerlink" title="五年回顾"></a>五年回顾</h1><p>2017年5月，我拿到了第一个实习offer。<br>企业的环境比起学校来说，对能力的锻炼是飞速的。在第一家实习公司我学到了如何快速的完成工业项目的需求。在第二家实习公司我学到了开源项目的协同合作开发和测试流程。在第三家实习公司培我逐渐培养起了解决问题的方法论，以及学到了一点怎么去做一些探索性的东西的思路。</p>
 <p>而从毕业到现在，我也在这第三家公司待了两年多了。在第一份实习里，带我的mentor是一个工作两年的师兄，一个非常靠谱的人。如今我也是个毕业两年多的人了，也开始带新人了，有时候恍惚回想起五年前，一边感激当年的前辈，一边也会想着怎么能像当前师兄带我一样去帮助新人成长。</p>
 <p>五年带给人的变化不止是从新人变成熟练工这么简单，我从最早的C++后端，到高性能计算以及现在的AI infra方向，不知不觉方向也经历了很大的变动。到今天这个时间节点，AI infra已经是一个从业者众多，卷成红海一样的方向了。很多大公司都试图提出自己的解决方案，这导致这个方向的技术，非常的碎片化。</p>
