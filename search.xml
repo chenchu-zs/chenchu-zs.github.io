@@ -164,6 +164,20 @@
       </categories>
   </entry>
   <entry>
+    <title>Python包的构建与分发——setup.py</title>
+    <url>/2021/10/09/python-setup/</url>
+    <content><![CDATA[<p>python项目或者Python与C++的混合项目中必然要用到setup.py来构建包，在这里总结以下它的使用方式。</p>
+<span id="more"></span>
+<h1 id="构建项目的命令"><a href="#构建项目的命令" class="headerlink" title="构建项目的命令"></a>构建项目的命令</h1><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 在本地构建模块，不安装</span></span><br><span class="line">python setup.py build</span><br><span class="line"><span class="comment"># 将项目安装到pip/conan环境中</span></span><br><span class="line">python setup.py install</span><br><span class="line"><span class="comment"># 安装项目的软链接到pip/conan环境中（适用于开发中的项目）</span></span><br><span class="line">python setup.py develop</span><br><span class="line"><span class="comment"># 在local目录构建whl包</span></span><br><span class="line">python setup.py bdist_wheel</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等同于python setup.py install</span></span><br><span class="line">pip install .</span><br><span class="line"><span class="comment"># 等同于python setup.py develop, -e即editable</span></span><br><span class="line">pip install -e .</span><br></pre></td></tr></table></figure>
+<h1 id="Setuptools"><a href="#Setuptools" class="headerlink" title="Setuptools"></a>Setuptools</h1><p>distutils是python官方的打包工具，Setuptool是基于distutils的增强版本，目前都通过这个工具来打包。一般conda和pip的python虚拟环境都会带有Setuptools.<br><code>setup.py</code>其实就是setuptools的配置文件。需要完善其中的setup函数来完成打包，基本命令如下。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">from setuptools import setup</span><br><span class="line">setup()</span><br></pre></td></tr></table></figure>
+<h1 id="setup-py的参数配置"><a href="#setup-py的参数配置" class="headerlink" title="setup.py的参数配置"></a>setup.py的参数配置</h1><p>以一个实现加法功能的python和C++混合编程项目为例介绍setup.py的常见参数。</p>
+]]></content>
+      <categories>
+        <category>python</category>
+      </categories>
+  </entry>
+  <entry>
     <title>vim配置</title>
     <url>/2021/05/31/vim/</url>
     <content><![CDATA[<p>稍微调教一下vim</p>
@@ -292,15 +306,6 @@
 ]]></content>
       <categories>
         <category>docker</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>Python包的构建与分发——setup.py</title>
-    <url>/2020/10/09/python-setup/</url>
-    <content><![CDATA[<p>python项目中必然要用到setup.py来构建包，在这里总结以下它的使用方式。</p>
-<span id="more"></span>]]></content>
-      <categories>
-        <category>python</category>
       </categories>
   </entry>
   <entry>
