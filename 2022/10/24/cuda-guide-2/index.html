@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Mist","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="《CUDA C Programing Guide》读书笔记1——整体介绍">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《CUDA C Programing Guide》读书笔记2——编程模型">
+<meta property="og:url" content="http://example.com/2022/10/24/cuda-guide-2/index.html">
+<meta property="og:site_name" content="chenchu.zs&#39;s blog">
+<meta property="og:description" content="《CUDA C Programing Guide》读书笔记1——整体介绍">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/10/24/cuda-guide-2/figure4.png">
+<meta property="og:image" content="http://example.com/2022/10/24/cuda-guide-2/figure5.png">
+<meta property="article:published_time" content="2022-10-24T13:53:54.000Z">
+<meta property="article:modified_time" content="2022-11-02T14:05:27.817Z">
+<meta property="article:author" content="Zhang Shu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/10/24/cuda-guide-2/figure4.png">
+
+
+<link rel="canonical" href="http://example.com/2022/10/24/cuda-guide-2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://example.com/2022/10/24/cuda-guide-2/","path":"2022/10/24/cuda-guide-2/","title":"《CUDA C Programing Guide》读书笔记2——编程模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>《CUDA C Programing Guide》读书笔记2——编程模型 | chenchu.zs's blog</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">chenchu.zs's blog</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">仓鼠君的瓜子库</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#2-1-%E6%A0%B8%E5%87%BD%E6%95%B0-Kernels"><span class="nav-number">1.</span> <span class="nav-text">2.1 核函数 (Kernels)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-2-%E7%BA%BF%E7%A8%8B%E5%B1%82%E6%AC%A1%E7%BB%93%E6%9E%84%EF%BC%88Thread-Hierarchy%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">2.2 线程层次结构（Thread Hierarchy）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-1-Thread-Block-Clusters"><span class="nav-number">2.1.</span> <span class="nav-text">2.2.1 Thread Block Clusters</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-3-%E5%AD%98%E5%82%A8%E5%B1%82%E6%AC%A1-Memory-Hierarchy"><span class="nav-number">3.</span> <span class="nav-text">2.3 存储层次 (Memory Hierarchy)</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Zhang Shu"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">Zhang Shu</p>
+  <div class="site-description" itemprop="description">积跬步以致千里</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/chenchu-zs" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;chenchu-zs" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/24/cuda-guide-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Zhang Shu">
+      <meta itemprop="description" content="积跬步以致千里">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="chenchu.zs's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《CUDA C Programing Guide》读书笔记2——编程模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-10-24 21:53:54" itemprop="dateCreated datePublished" datetime="2022-10-24T21:53:54+08:00">2022-10-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-11-02 22:05:27" itemprop="dateModified" datetime="2022-11-02T22:05:27+08:00">2022-11-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/CUDA/" itemprop="url" rel="index"><span itemprop="name">CUDA</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><a target="_blank" rel="noopener" href="https://chenchu-zs.github.io/2022/10/23/cuda-guide-1/">《CUDA C Programing Guide》读书笔记1——整体介绍</a></p>
+<span id="more"></span>
+<p>本章介绍CUDA编程模型背后的主要概念，主要阐述这些概念是怎么在C++中的表现的。关于CUDA C++的扩展描述在下一章。<br>本章使用vectorAdd作为示例，详细代码在<a target="_blank" rel="noopener" href="https://github.com/nvidia/cuda-samples">cudaSample</a>中。</p>
+<h1 id="2-1-核函数-Kernels"><a href="#2-1-核函数-Kernels" class="headerlink" title="2.1 核函数 (Kernels)"></a>2.1 核函数 (Kernels)</h1><p>CUDA C++扩展了C++，允许程序员定义C++函数作为kernel。当kernel被调用时，由N个不同的CUDA线程并行执行N次，而不是像普通C++函数那样只执行一次。<br>kernel 是用<code>__global__</code>修饰符定义的，执行这个kernel的CUDA线程数量是通过<code>&lt;&lt;&lt;...&gt;&gt;&gt;</code>来配置的，kernel中每个线程都有唯一的线程ID，可以通过内置变量访问。<br>以下示例代码使用内置变量threadIdx，把size为N的两个向量A和B相加，并将结果保存到向量C中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">VecAdd</span><span class="params">(<span class="type">float</span>* A, <span class="type">float</span>* B, <span class="type">float</span>* C)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = threadIdx.x;</span><br><span class="line">    C[i] = A[i] + B[i];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation with N threads</span></span><br><span class="line">    VecAdd&lt;&lt;&lt;<span class="number">1</span>, N&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码中，执行VecAdd()的N个线程中的每个线程都进行了对应的加法运算。</p>
+<h1 id="2-2-线程层次结构（Thread-Hierarchy）"><a href="#2-2-线程层次结构（Thread-Hierarchy）" class="headerlink" title="2.2 线程层次结构（Thread Hierarchy）"></a>2.2 线程层次结构（Thread Hierarchy）</h1><p>便于理解起见，<code>threadIdx</code>被看做一个三维向量。可以使用一维、二维或三维的 <em>线程索引(thread index)</em> 来表示一维、二维或三维的 <em>线程块(thread block)</em> 。这提供了一种自然的方式来调用一个域中的元素的计算，如向量计算(1D)、矩阵计算(2D)或体积计算(3D)。<br>一个线程的索引和它的线程ID以一种直接的方式相互关联。对于一维块，它们是相同的；对于尺寸为$(D_x, D_y)$的二维块，索引为<code>(x, y)</code>的线程ID是$(x + y * D_x)$；对于尺寸为$(D_x, D_y, D_z)$的三维块，索引为<code>(x, y, z)</code>的线程的ID是$(x + y * D_x + z * D_x * D_y)$ 。<br>以下代码展示了将两个大小为<code>NxN</code>的矩阵A和B相加，并将结果保存到矩阵C中的示例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">MatAdd</span><span class="params">(<span class="type">float</span> A[N][N], <span class="type">float</span> B[N][N], <span class="type">float</span> C[N][N])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> j = threadIdx.y;</span><br><span class="line">    C[i][j] = A[i][j] + B[i][j];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation with one block of N * N * 1 threads</span></span><br><span class="line">    <span class="type">int</span> numBlocks = <span class="number">1</span>;</span><br><span class="line">    <span class="function">dim3 <span class="title">threadsPerBlock</span><span class="params">(N, N)</span></span>;</span><br><span class="line">    MatAdd&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>每个线程块的线程数是有限制的。因为<font color="red">一个块的所有线程都应该驻留在同一个SM Core（streaming multiprocessor core）上</font>，并且必须共享该核的有限内存资源。在现有的GPU上，一个线程块最多可包含1024个线程。<br>一个kernel可以由多个形状相同的线程块来执行，因此，总的线程数等于每个块的线程数乘以块数。<br>线程块(block)被组织成一维、二维或者三维的网格(grid)，如图4所示。网格中的线程块的数量通常是由被处理的数据大小(通常超过了系统中的处理器数量)决定的。<br><img src="figure4.png" width="50%" height="50%"><br>每个block的线程数和每个grid的block数量在 &lt;&lt;&lt;…&gt;&gt;语法可以是int或dim3类型。<br>grid中的每个block可以通过一个一维、二维或三维的唯一索引来识别。在kernel中可以通过内置的<code>blockIdx</code>变量访问。block的尺寸可以在kernel中通过内置的 <code>blockDim</code>变量访问。<br>将之前的<code>Matadd()</code>示例扩展为处理多个block的，代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">MatAdd</span><span class="params">(<span class="type">float</span> A[N][N], <span class="type">float</span> B[N][N], <span class="type">float</span> C[N][N])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = blockIdx.x * blockDim.x + threadIdx.x;</span><br><span class="line">    <span class="type">int</span> j = blockIdx.y * blockDim.y + threadIdx.y;</span><br><span class="line">    <span class="keyword">if</span> (i &lt; N &amp;&amp; j &lt; N)</span><br><span class="line">    C[i][j] = A[i][j] + B[i][j];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation</span></span><br><span class="line">    <span class="function">dim3 <span class="title">threadsPerBlock</span><span class="params">(<span class="number">16</span>, <span class="number">16</span>)</span></span>;</span><br><span class="line">    <span class="function">dim3 <span class="title">numBlocks</span><span class="params">(N / threadsPerBlock.x, N / threadsPerBlock.y)</span></span>;</span><br><span class="line">    MatAdd&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>16x16的线程块大小（256个线程）是一种常见的选择（尽管在当前示例中是任意的）。Grid要包含足够数量的block，以便像之前示例一样让矩阵中的每个元素都有一个thread来处理，为简单起见，此示例假设每个维度中每个grid的线程数可以被该维度中每个block的线程数平均整除，尽管一般情况不一定如此。<br><strong>线程块需要独立执行</strong> ，必须能够以任何顺序(并行或串行)执行它们。这种独立性允许线程块以任意顺序被调度到任意数量的物理core上。因此程序员能够编写随核数量扩展的代码。<br>block内的线程可以通过共享内存来共享数据，并通过同步来协调内存访问，从而实现block内的线程协作。更准确地说，可以通过在kernel中调用<code>__syncthreads()</code>来指定同步点。<code>__syncthreads()</code>作为一个屏障（barrier)，block内的所有线程必须在这个屏障等待，然后才允许任何线程继续进行。3.2.4节给出了一个使用共享内存的例子。除了<code>__syncthreads()</code>外，扩展章节“Cooperative Groups API”提供了一套丰富的线程同步的原语。<br>为了高效协作，共享内存应该是靠近处理器核的低延迟内存（很像L1 cache），并且<code>__syncthreads()</code>应该是轻量级的。</p>
+<h2 id="2-2-1-Thread-Block-Clusters"><a href="#2-2-1-Thread-Block-Clusters" class="headerlink" title="2.2.1 Thread Block Clusters"></a>2.2.1 Thread Block Clusters</h2><p>随着NVIDIA Compute Capability 9.0的推出，CUDA编程模型引入了一个可选的层次结构级别，即线程块集群。线程块集群由线程块组成。和block内线程必须被调度在同一个SM上相似，cluster内的block也必须被调度在同一个GPU Processing Cluster (GPC)上。</p>
+<blockquote>
+<p>需要学习一下GPC的硬件组织</p>
+</blockquote>
+<p>和block相似，cluster也可以组织成一维、二维或者三维的形式，如图5所示。一个cluster内的block数量可以由用户定义，用户定义的这个值不超过8，这是CUDA支持的最大portable的size。超过8的是特定的架构，可以使用<code>cudaOccupancyMaxPotentialClusterSize</code> API进行查询。<br><img src="figure5.png" width="50%" height="50%"></p>
+<blockquote>
+<p>在使用cluster特性启动的kernel中，<code>grid size</code>仍然表示<code>grid</code>中<code>block</code>的数量，为了兼容性。The rank of a block in a cluster可以用<code>Cluster Group</code> API来查找。</p>
+</blockquote>
+<p>在kernel中启用cluster特性有两种方式：使用<code>__cluster_dims__(X,Y,Z)</code>修饰kernel，或者使用CUDA的kernel启动API<code>cudaLaunchKernelEx</code>。<br>以下例子展示如何使用编译期修饰符启动一个支持cluster特性的kernel。使用这种方式启动的kernel, <code>cluster size</code>将在编译期固定，其他和普通使用<code>&lt;&lt;&lt;&gt;&gt;&gt;</code>启动的kernel没有区别。</p>
+<h1 id="2-3-存储层次-Memory-Hierarchy"><a href="#2-3-存储层次-Memory-Hierarchy" class="headerlink" title="2.3 存储层次 (Memory Hierarchy)"></a>2.3 存储层次 (Memory Hierarchy)</h1>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/23/cuda-guide-1/" rel="prev" title="《CUDA C Programing Guide》读书笔记1——整体介绍">
+                  <i class="fa fa-chevron-left"></i> 《CUDA C Programing Guide》读书笔记1——整体介绍
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Zhang Shu</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">30k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">27 分钟</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>
