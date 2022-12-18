@@ -184,8 +184,10 @@
     <content><![CDATA[<p>两种方法：</p>
 <ol>
 <li>PIMP: 在接口类成员中包含一个指向实现类的指针，这样可以最大限度的做到接口和实现分离的原则。</li>
-<li>Object-Interface : 一般来说，如果一个接口类对应有若干个实现类，可以采用这种方法。<span id="more"></span></li>
+<li>Object-Interface : 一般来说，如果一个接口类对应有若干个实现类，可以采用这种方法。</li>
 </ol>
+<span id="more"></span>
+
 <h1 id="PIMP"><a href="#PIMP" class="headerlink" title="PIMP"></a>PIMP</h1><p>PIMP就是pointer to implementation，即指向实现的指针。是C++比较推荐的定义接口的方式。<br>使用指向实现的指针定义Network接口类如下：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">NetworkImpl</span>;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Network</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">send</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* host, </span></span></span><br><span class="line"><span class="params"><span class="function">              <span class="type">uint16_t</span> port, </span></span></span><br><span class="line"><span class="params"><span class="function">              <span class="type">const</span> std::string&amp; message)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Network</span>();</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">Network</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    NetworkImpl* impl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>Network的实现通过impl指针转发给NetworkImpl，<strong>NetworkImpl使用前置声明，实现对用户隐藏</strong>。<br>使用指向实现的指针的方式定义接口，接口类对象的创建和销毁可以由用户负责，因此用户可以选择将Network类的对象创建在栈上，生命周期自动管理。<br>使用指向实现的指针定义接口具有良好的通用性，用户能够直接创建和销毁接口对象，并且增加新的接口函数不影响二进制兼容性，便于系统的演进。</p>
