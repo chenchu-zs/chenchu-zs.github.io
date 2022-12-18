@@ -95,62 +95,55 @@
       </categories>
   </entry>
   <entry>
-    <title>C++项目组织构建工具CMake</title>
-    <url>/2021/10/16/cmake/</url>
-    <content><![CDATA[<p>CMake是一个跨平台的构架工具，它本身并不参与构建，而是通过解析CMakeLists.txt来生成Makefile，最终完成构建。<br>使用CMake的本质就是学习如何正确编写CMakelists.txt来表示项目的构建规则。</p>
+    <title>《CUDA C Programing Guide》读书笔记2——编程模型</title>
+    <url>/2022/10/24/cuda-guide-2/</url>
+    <content><![CDATA[<p><a href="https://chenchu-zs.github.io/2022/10/23/cuda-guide-1/">《CUDA C Programing Guide》读书笔记1——整体介绍</a></p>
 <span id="more"></span>
-<h1 id="cmake的基本使用"><a href="#cmake的基本使用" class="headerlink" title="cmake的基本使用"></a>cmake的基本使用</h1><p>以一个简单的<code>CalculatorDemo</code>为例来总结CMakeLists.txt的基本使用方式。</p>
-<h2 id="vscode插件使用"><a href="#vscode插件使用" class="headerlink" title="vscode插件使用"></a>vscode插件使用</h2><p>我们可以使用vscode的<code>CMake Tools</code>插件来加快开发速度。<br>命令面板输入 <code>Cmake:Quick Start</code>, 然后指定编译器版本、项目名称和构建目标，然后系统会自动的在<code>CalculatorDemo</code>下创建两个文件如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">.</span><br><span class="line">├── CMakeLists.txt</span><br><span class="line">└── CalculatorDemo.cpp</span><br></pre></td></tr></table></figure>
-<p>其中<code>CMakeLists.txt</code>如下:</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定项目编译所需的最低cmake版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.0</span>.<span class="number">0</span>)</span><br><span class="line"><span class="comment"># 指定项目名称和版本</span></span><br><span class="line"><span class="keyword">project</span>(CalculatorDemo VERSION <span class="number">0.1</span>.<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># include(CTest)</span></span><br><span class="line"><span class="comment"># enable_testing()</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 编译CalculatorDemo.cpp为一个libray</span></span><br><span class="line"><span class="keyword">add_library</span>(CalculatorDemo CalculatorDemo.cpp)</span><br><span class="line"></span><br><span class="line"><span class="comment"># set(CPACK_PROJECT_NAME $&#123;PROJECT_NAME&#125;)</span></span><br><span class="line"><span class="comment"># set(CPACK_PROJECT_VERSION $&#123;PROJECT_VERSION&#125;)</span></span><br><span class="line"><span class="comment"># include(CPack)</span></span><br></pre></td></tr></table></figure>
+<p>本章介绍CUDA编程模型背后的主要概念，主要阐述这些概念是怎么在C++中的表现的。关于CUDA C++的扩展描述在下一章。<br>本章使用vectorAdd作为示例，详细代码在<a href="https://github.com/nvidia/cuda-samples">cudaSample</a>中。</p>
+<h1 id="2-1-核函数-Kernels"><a href="#2-1-核函数-Kernels" class="headerlink" title="2.1 核函数 (Kernels)"></a>2.1 核函数 (Kernels)</h1><p>CUDA C++扩展了C++，允许程序员定义C++函数作为kernel。当kernel被调用时，由N个不同的CUDA线程并行执行N次，而不是像普通C++函数那样只执行一次。<br>kernel 是用<code>__global__</code>修饰符定义的，执行这个kernel的CUDA线程数量是通过<code>&lt;&lt;&lt;...&gt;&gt;&gt;</code>来配置的，kernel中每个线程都有唯一的线程ID，可以通过内置变量访问。<br>以下示例代码使用内置变量threadIdx，把size为N的两个向量A和B相加，并将结果保存到向量C中：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">VecAdd</span><span class="params">(<span class="type">float</span>* A, <span class="type">float</span>* B, <span class="type">float</span>* C)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = threadIdx.x;</span><br><span class="line">    C[i] = A[i] + B[i];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation with N threads</span></span><br><span class="line">    VecAdd&lt;&lt;&lt;<span class="number">1</span>, N&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码中，执行VecAdd()的N个线程中的每个线程都进行了对应的加法运算。</p>
+<h1 id="2-2-线程层次结构（Thread-Hierarchy）"><a href="#2-2-线程层次结构（Thread-Hierarchy）" class="headerlink" title="2.2 线程层次结构（Thread Hierarchy）"></a>2.2 线程层次结构（Thread Hierarchy）</h1><p>便于理解起见，<code>threadIdx</code>被看做一个三维向量。可以使用一维、二维或三维的 <em>线程索引(thread index)</em> 来表示一维、二维或三维的 <em>线程块(thread block)</em> 。这提供了一种自然的方式来调用一个域中的元素的计算，如向量计算(1D)、矩阵计算(2D)或体积计算(3D)。<br>一个线程的索引和它的线程ID以一种直接的方式相互关联。对于一维块，它们是相同的；对于尺寸为$(D_x, D_y)$的二维块，索引为<code>(x, y)</code>的线程ID是$(x + y * D_x)$；对于尺寸为$(D_x, D_y, D_z)$的三维块，索引为<code>(x, y, z)</code>的线程的ID是$(x + y * D_x + z * D_x * D_y)$ 。<br>以下代码展示了将两个大小为<code>NxN</code>的矩阵A和B相加，并将结果保存到矩阵C中的示例：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">MatAdd</span><span class="params">(<span class="type">float</span> A[N][N], <span class="type">float</span> B[N][N], <span class="type">float</span> C[N][N])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> j = threadIdx.y;</span><br><span class="line">    C[i][j] = A[i][j] + B[i][j];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation with one block of N * N * 1 threads</span></span><br><span class="line">    <span class="type">int</span> numBlocks = <span class="number">1</span>;</span><br><span class="line">    <span class="function">dim3 <span class="title">threadsPerBlock</span><span class="params">(N, N)</span></span>;</span><br><span class="line">    MatAdd&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>每个线程块的线程数是有限制的。因为<font color="red">一个块的所有线程都应该驻留在同一个SM Core（streaming multiprocessor core）上</font>，并且必须共享该核的有限内存资源。在现有的GPU上，一个线程块最多可包含1024个线程。<br>一个kernel可以由多个形状相同的线程块来执行，因此，总的线程数等于每个块的线程数乘以块数。<br>线程块(block)被组织成一维、二维或者三维的网格(grid)，如图4所示。网格中的线程块的数量通常是由被处理的数据大小(通常超过了系统中的处理器数量)决定的。<br><img src="figure4.png" width="50%" height="50%"><br>每个block的线程数和每个grid的block数量在 &lt;&lt;&lt;…&gt;&gt;语法可以是int或dim3类型。<br>grid中的每个block可以通过一个一维、二维或三维的唯一索引来识别。在kernel中可以通过内置的<code>blockIdx</code>变量访问。block的尺寸可以在kernel中通过内置的 <code>blockDim</code>变量访问。<br>将之前的<code>Matadd()</code>示例扩展为处理多个block的，代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">MatAdd</span><span class="params">(<span class="type">float</span> A[N][N], <span class="type">float</span> B[N][N], <span class="type">float</span> C[N][N])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = blockIdx.x * blockDim.x + threadIdx.x;</span><br><span class="line">    <span class="type">int</span> j = blockIdx.y * blockDim.y + threadIdx.y;</span><br><span class="line">    <span class="keyword">if</span> (i &lt; N &amp;&amp; j &lt; N)</span><br><span class="line">    C[i][j] = A[i][j] + B[i][j];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation</span></span><br><span class="line">    <span class="function">dim3 <span class="title">threadsPerBlock</span><span class="params">(<span class="number">16</span>, <span class="number">16</span>)</span></span>;</span><br><span class="line">    <span class="function">dim3 <span class="title">numBlocks</span><span class="params">(N / threadsPerBlock.x, N / threadsPerBlock.y)</span></span>;</span><br><span class="line">    MatAdd&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>16x16的线程块大小（256个线程）是一种常见的选择（尽管在当前示例中是任意的）。Grid要包含足够数量的block，以便像之前示例一样让矩阵中的每个元素都有一个thread来处理，为简单起见，此示例假设每个维度中每个grid的线程数可以被该维度中每个block的线程数平均整除，尽管一般情况不一定如此。<br><strong>线程块需要独立执行</strong> ，必须能够以任何顺序(并行或串行)执行它们。这种独立性允许线程块以任意顺序被调度到任意数量的物理core上。因此程序员能够编写随核数量扩展的代码。<br>block内的线程可以通过共享内存来共享数据，并通过同步来协调内存访问，从而实现block内的线程协作。更准确地说，可以通过在kernel中调用<code>__syncthreads()</code>来指定同步点。<code>__syncthreads()</code>作为一个屏障（barrier)，block内的所有线程必须在这个屏障等待，然后才允许任何线程继续进行。3.2.4节给出了一个使用共享内存的例子。除了<code>__syncthreads()</code>外，扩展章节“Cooperative Groups API”提供了一套丰富的线程同步的原语。<br>为了高效协作，共享内存应该是靠近处理器核的低延迟内存（很像L1 cache），并且<code>__syncthreads()</code>应该是轻量级的。</p>
+<h2 id="2-2-1-Thread-Block-Clusters"><a href="#2-2-1-Thread-Block-Clusters" class="headerlink" title="2.2.1 Thread Block Clusters"></a>2.2.1 Thread Block Clusters</h2><p>随着NVIDIA Compute Capability 9.0的推出，CUDA编程模型引入了一个可选的层次结构级别，即线程块集群。线程块集群由线程块组成。和block内线程必须被调度在同一个SM上相似，cluster内的block也必须被调度在同一个GPU Processing Cluster (GPC)上。</p>
 <blockquote>
-<ul>
-<li>CPack和CTest是插件为我们自动添加的测试和打包模块，先注释掉，后面再总结。其他的是构建项目的必须部分。</li>
-</ul>
+<p>需要学习一下GPC的硬件组织</p>
 </blockquote>
-<p>编写一个简单的<code>build.sh</code>构建</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set -x</span><br><span class="line">rm build -rf</span><br><span class="line">mkdir build</span><br><span class="line">cd build</span><br><span class="line">cmake ..</span><br><span class="line">make -j</span><br></pre></td></tr></table></figure>
-<p><img src="/2021/10/16/cmake/build.png" alt="image.png"><br>可以看到成功编译了一个名为libCalculatorDemo.a的静态库文件。</p>
-<p>现在我们要对<code>CMakeLists.txt</code>进行一些修改。</p>
-<h2 id="设置build-type"><a href="#设置build-type" class="headerlink" title="设置build type"></a>设置build type</h2><p>一共有四种可选项：<code>Debug/Release/RelWithDebInfo/MinSizeRel</code></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">NOT</span> CMAKE_BUILD_TYPE)</span><br><span class="line">  <span class="keyword">set</span>(CMAKE_BUILD_TYPE <span class="string">&quot;Release&quot;</span> CACHE <span class="keyword">STRING</span> <span class="string">&quot;Choose the type of build,</span></span><br><span class="line"><span class="string">    options are: Debug/Release/RelWithDebInfo/MinSizeRel.&quot;</span> FORCE)</span><br><span class="line"><span class="keyword">endif</span>()</span><br></pre></td></tr></table></figure>
-<h2 id="设置verbose-makefile"><a href="#设置verbose-makefile" class="headerlink" title="设置verbose makefile"></a>设置verbose makefile</h2><p>该参数在开发调试时可以方便的查看编译命令是否正确</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set(CMAKE_VERBOSE_MAKEFILE ON)</span><br></pre></td></tr></table></figure>
-<h2 id="设置编译语言"><a href="#设置编译语言" class="headerlink" title="设置编译语言"></a>设置编译语言</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># project中指定默认的编译语言</span></span><br><span class="line"><span class="keyword">project</span>(CalculatorDemo LANGUAGES C CXX VERSION <span class="number">0.1</span>.<span class="number">0</span>)</span><br><span class="line"><span class="comment"># 启用某种语言，比如CUDA</span></span><br><span class="line"><span class="keyword">enable_language</span>(CUDA)</span><br></pre></td></tr></table></figure>
-<h2 id="设置C-标准"><a href="#设置C-标准" class="headerlink" title="设置C++标准"></a>设置C++标准</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">14</span>)</span><br><span class="line"><span class="comment"># 如果不设置，或者为OFF，则指定版本不可用时，会使用上一版本。</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD_REQUIRED <span class="keyword">ON</span>)</span><br></pre></td></tr></table></figure>
-<h2 id="设置C-编译选项"><a href="#设置C-编译选项" class="headerlink" title="设置C++编译选项"></a>设置C++编译选项</h2><p>可以自定义编译选项，比如开启所有的警告<code>-Wall</code>，有两种方式设定编译选项，例如：</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -Wall&quot;</span>)</span><br><span class="line"><span class="keyword">add_compile_options</span>(<span class="string">&quot;-Wall&quot;</span>)</span><br></pre></td></tr></table></figure>
-<h1 id="CMake项目管理"><a href="#CMake项目管理" class="headerlink" title="CMake项目管理"></a>CMake项目管理</h1><p>一般来说大型的项目通常都包含很多目录和文件，不同模块间有很复杂的依赖关系, 我们修改<code>CalculatorDemo</code>目录如下:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">.</span><br><span class="line">├── CMakeLists.txt</span><br><span class="line">├── build.sh</span><br><span class="line">├── include</span><br><span class="line">│   └── calculator.h</span><br><span class="line">├── src</span><br><span class="line">│   └── calculator.cpp</span><br><span class="line">└── test</span><br><span class="line">    ├── CMakeLists.txt</span><br><span class="line">    └── test_calculator.cpp</span><br></pre></td></tr></table></figure>
-<p>这是一种比较典型的目录组织方式：</p>
-<ul>
-<li>include目录为对外需要暴露的接口</li>
-<li>src目录中是项目的核心实现</li>
-<li>test目录中存放单元测试。</li>
-</ul>
-<p>顶层的<code>CMakeLists.txt</code>的代码如下</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.0</span>.<span class="number">0</span>)</span><br><span class="line"><span class="keyword">project</span>(CalculatorDemo LANGUAGES C CXX VERSION <span class="number">0.1</span>.<span class="number">0</span>)</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">NOT</span> CMAKE_BUILD_TYPE)</span><br><span class="line">  <span class="keyword">set</span>(CMAKE_BUILD_TYPE</span><br><span class="line">      Release</span><br><span class="line">      CACHE <span class="keyword">STRING</span> <span class="string">&quot;Choose the type of build,</span></span><br><span class="line"><span class="string">    options are: Debug/Release/RelWithDebInfo/MinSizeRel.&quot;</span> FORCE)</span><br><span class="line"><span class="keyword">endif</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD_REQUIRED <span class="keyword">ON</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_VERBOSE_MAKEFILE <span class="keyword">ON</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">message</span>(STATUS <span class="variable">$&#123;CMAKE_CXX_FLAGS&#125;</span>)</span><br><span class="line"><span class="keyword">add_compile_options</span>(<span class="string">&quot;-Wall&quot;</span>)</span><br><span class="line"><span class="keyword">add_library</span>(CalculatorDemo SHARED src/calculator.cpp)</span><br><span class="line"><span class="keyword">target_include_directories</span>(CalculatorDemo PUBLIC <span class="keyword">include</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_subdirectory</span>(<span class="keyword">test</span>)</span><br></pre></td></tr></table></figure>
-<p>test的<code>CMakeLists.txt</code>如下：</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">add_executable</span>(test_demo test_calculator.cpp)</span><br><span class="line"><span class="keyword">target_include_directories</span>(test_demo PUBLIC <span class="variable">$&#123;PROJECT_SOURCE_DIR&#125;</span>)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(test_demo PUBLIC CalculatorDemo)</span><br></pre></td></tr></table></figure>
-
-<h2 id="现代CMake的思想"><a href="#现代CMake的思想" class="headerlink" title="现代CMake的思想"></a>现代CMake的思想</h2><p>现代化的CMake是围绕<code>Target</code>和<code>Property</code>来定义的，并且竭力避免出现变量<code>variable</code>的定义。Variable横行是典型CMake2.8时期的风格。现代版的CMake更像是在遵循OOP的规则，通过<code>target</code>来约束<code>link</code>、<code>compile</code>等相关属性的作用域。</p>
-<h2 id="关键字"><a href="#关键字" class="headerlink" title="关键字"></a>关键字</h2><p>关键字一共有三个，指定的是目标文件依赖项的使用范围</p>
-<ul>
-<li><code>PRIVATE</code>: 私有的。表示Target的属性只定义在当前Target中，任何依赖当前Target的Target不共享PRIVATE关键字下定义的属性。</li>
-<li><code>INTERFACE</code>: 表示Target的属性不适用于其自身，而只适用于依赖其的Target。</li>
-<li><code>PUBLIC</code>: Target的属性既适用于其自身，也适用于依赖其的Target。</li>
-</ul>
-<h2 id="生成target"><a href="#生成target" class="headerlink" title="生成target"></a>生成target</h2><p>cmake可以生成两种类型的target：<strong>库文件</strong>或者<strong>可执行文件</strong>，如下：</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 生成库</span></span><br><span class="line"><span class="keyword">add_library</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;源文件<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="comment"># 生成可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;源文件<span class="keyword">list</span>&gt;)</span><br></pre></td></tr></table></figure>
-<p>在Demo中，先将src目录编译为库文件<code>CalculatorDemo.so</code>（通常用于对外发布），test目录编译测试代码为可执行文件，依赖刚才编译好的库文件，用于测试接口是否正确。</p>
-<h2 id="指定include路径"><a href="#指定include路径" class="headerlink" title="指定include路径"></a>指定include路径</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定某个target的头文件目录</span></span><br><span class="line"><span class="keyword">target_include_directories</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;<span class="keyword">include</span>目录<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="comment"># 指定全局的头文件目录（不推荐）</span></span><br><span class="line"><span class="keyword">include_directories</span>(&lt;<span class="keyword">include</span>路径<span class="keyword">list</span>&gt;)</span><br></pre></td></tr></table></figure>
-
-<h2 id="指定依赖库的路径"><a href="#指定依赖库的路径" class="headerlink" title="指定依赖库的路径"></a>指定依赖库的路径</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定某个target的依赖库路径</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;lib路径<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="comment"># 指定全局的依赖路径</span></span><br><span class="line"><span class="keyword">link_directories</span>(&lt;lib所在的目录<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="keyword">link_libraries</span>(&lt;lib路径<span class="keyword">list</span>&gt;)</span><br></pre></td></tr></table></figure>
-
-<h2 id="add-subdirectory"><a href="#add-subdirectory" class="headerlink" title="add_subdirectory"></a>add_subdirectory</h2><h2 id="设置install规则"><a href="#设置install规则" class="headerlink" title="设置install规则"></a>设置install规则</h2>]]></content>
+<p>和block相似，cluster也可以组织成一维、二维或者三维的形式，如图5所示。一个cluster内的block数量可以由用户定义，用户定义的这个值不超过8，这是CUDA支持的最大portable的size。超过8的是特定的架构，可以使用<code>cudaOccupancyMaxPotentialClusterSize</code> API进行查询。<br><img src="figure5.png" width="50%" height="50%"></p>
+<blockquote>
+<p>在使用cluster特性启动的kernel中，<code>grid size</code>仍然表示<code>grid</code>中<code>block</code>的数量，为了兼容性。The rank of a block in a cluster可以用<code>Cluster Group</code> API来查找。</p>
+</blockquote>
+<p>在kernel中启用cluster特性有两种方式：使用<code>__cluster_dims__(X,Y,Z)</code>修饰kernel，或者使用CUDA的kernel启动API<code>cudaLaunchKernelEx</code>。<br>以下例子展示如何使用编译期修饰符启动一个支持cluster特性的kernel。使用这种方式启动的kernel, <code>cluster size</code>将在编译期固定，其他和普通使用<code>&lt;&lt;&lt;&gt;&gt;&gt;</code>启动的kernel没有区别。</p>
+<h1 id="2-3-存储层次-Memory-Hierarchy"><a href="#2-3-存储层次-Memory-Hierarchy" class="headerlink" title="2.3 存储层次 (Memory Hierarchy)"></a>2.3 存储层次 (Memory Hierarchy)</h1>]]></content>
       <categories>
-        <category>c++</category>
+        <category>CUDA</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>《CUDA C Programing Guide》读书笔记1——整体介绍</title>
+    <url>/2022/10/23/cuda-guide-1/</url>
+    <content><![CDATA[<p>从事异构计算领域三年时间，却没有系统的读过GPU相关的基础文档和书籍，以至于基础不牢，很多东西写了又忘，《CUDA C Programing Guide》是NV官方提供的CUDA指导文档，从头复习一遍，边读边翻译，记录一下。</p>
+<span id="more"></span>
+<h1 id="1-1-使用GPU的好处"><a href="#1-1-使用GPU的好处" class="headerlink" title="1.1 使用GPU的好处"></a>1.1 使用GPU的好处</h1><p>GPU在同等价格和功耗条件下提供了比CPU高得多的<strong>指令吞吐量(Instruction throughtput)</strong> 和 <strong>内存带宽(memory bandwidth)</strong> 。得益于此，应用可以在GPU上运行的比CPU更快。其他计算设备如FPGA，尽管能效也很好，但是编程灵活性远低于GPU。<br>GPU和CPU的能力差异是因为它们的设计目标不同。CPU的设计是为了尽可能快的执行一系列操作（每个操作的单位是线程），并且允许并行的执行几十个这样的线程。而GPU的设计是擅长执行数千个这样的线程。（为了更大的吞吐量，代价是单个线程的性能会慢些）。<br>GPU是专门用于高度并行的计算任务的。因此在 <font color="red">设计时有更多的晶体管被用于数据计算(data processing)而不是数据缓存(data caching)和控制流(flow control)</font>。图1是CPU和GPU的芯片资源分布示意图。<br><img src="figure1.png" width="50%" height="50%"><br>将更多的晶体管用于数据计算过程（如浮点计算）有益于高度并行计算。GPU可以通过计算隐藏内存访问延迟，而不是依靠大量数据缓存和复杂流程控制来避免内存访问延迟。（数据缓存和流控制设计都需要大量的晶体管来实现，成本昂贵）<br>通常，一个应用程序既有可以并行的部分，也有需要串行执行的部分，因此系统在设计时混用CPU和GPU可以最大化发挥整体性能。具有高度并行性的应用程序可以利用GPU这种并行特性来获得比CPU上运行时更高的性能。</p>
+<h1 id="1-2-CUDA：通用的并行计算平台和编程模型"><a href="#1-2-CUDA：通用的并行计算平台和编程模型" class="headerlink" title="1.2 CUDA：通用的并行计算平台和编程模型"></a>1.2 CUDA：通用的并行计算平台和编程模型</h1><p>2006年11月，NVIDIA推出了通用的并行计算平台和编程模型 CUDA。它可以利用NVIDIA GPU中的并行计算引擎，比CPU更高效的方式来解决许多复杂的计算问题。<br>CUDA提供了一个软件环境，允许开发人员使用C++编写程序。同时也支持Fortran、DirectCompute、OpenACC等其他的编程方式。<br><img src="figure2.png" width="50%" height="50%"></p>
+<h1 id="1-3-可扩展的编程模型"><a href="#1-3-可扩展的编程模型" class="headerlink" title="1.3 可扩展的编程模型"></a>1.3 可扩展的编程模型</h1><p>多核CPU (multicore CPUs) 和多核GPU(manycore GPUs)的出现意味着现在主流处理器芯片都是并行系统。这带来了一个挑战是如何像写普通程序一样的编写并行程序，无感的扩展其并行性，使其能利用更多的处理器核，就像3D图形程序那样。<br>CUDA编程模型旨在克服这一挑战，同时也能给熟悉C这样的标准编程语言的程序员较低的学习曲线。<br>它向程序员提供了一组最小的语言扩展，核心是三个关键抽象：<strong>线程组的层次结构、共享内存和屏障同步(barrier synchronization)</strong> 。<br>这些抽象提供了粗粒度的数据并行和任务并行和细粒度的数据并行和线程并行。它指导程序员将问题分解为一些可以被线程块(blocks of threads)独立执行和并行执行的子问题，每个子问题可以进一步分解为由块内的所有线程协同并行解决的更细的部分。</p>
+<blockquote>
+<p>my notes：注意这两个粒度划分的思想。不同的线程块独立且并行的执行，而线程块内部的线程间可以并行执行也可以协作完成一个子问题。</p>
+</blockquote>
+<p>这种问题分解的思路即保证了代码的可读性 （允许block内的线程协作完成一个子任务），同时也实现了并行的自动伸缩性（线程块独立并行执行子任务）。事实上，每个线程块可以以任何顺序（无论是并行的还是串行的）被调度在GPU内的任意可用的多处理器(multiprocessor)上。因此编译后的CUDA程序可以在任何数量的多处理器上执行（如图3所示），只有运行时系统需要知道物理的多处理器的数量。<br><img src="figure3.png" width="50%" height="50%"></p>
+<blockquote>
+<p>notes:  GPU是围绕着一组流式多处理器（SM）阵列建立的（更多细节见Chapter.4 硬件实现）。一个多线程程序被划分为独立执行的线程块，因此，拥有更多multiprocessor的GPU执行程序的时间比拥有较少multiprocessors的GPU要短。</p>
+</blockquote>
+<blockquote>
+<p>my notes: 关于Automatic Scalability还要再理解一下</p>
+</blockquote>
+<p>这种可扩展的编程模型通过简单的扩展multiprocessor和memory partitions的数量，可以覆盖广阔的市场范围：从高性能计算GeForce GPU、专业Quadro和Tesla计算产品 到 各种便宜的主流GeForce GPU（参见支持CUDA的GPU列表）。</p>
+]]></content>
+      <categories>
+        <category>CUDA</category>
       </categories>
   </entry>
   <entry>
@@ -186,6 +179,237 @@
       </categories>
   </entry>
   <entry>
+    <title>C++接口设计思想</title>
+    <url>/2021/10/28/cpp-interface-design/</url>
+    <content><![CDATA[<p>两种方法：</p>
+<ol>
+<li>PIMP: 在接口类成员中包含一个指向实现类的指针，这样可以最大限度的做到接口和实现分离的原则。</li>
+<li>Object-Interface : 一般来说，如果一个接口类对应有若干个实现类，可以采用这种方法。<span id="more"></span></li>
+</ol>
+<h1 id="PIMP"><a href="#PIMP" class="headerlink" title="PIMP"></a>PIMP</h1><p>PIMP就是pointer to implementation，即指向实现的指针。是C++比较推荐的定义接口的方式。<br>使用指向实现的指针定义Network接口类如下：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">NetworkImpl</span>;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Network</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">send</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* host, </span></span></span><br><span class="line"><span class="params"><span class="function">              <span class="type">uint16_t</span> port, </span></span></span><br><span class="line"><span class="params"><span class="function">              <span class="type">const</span> std::string&amp; message)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Network</span>();</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">Network</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    NetworkImpl* impl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Network的实现通过impl指针转发给NetworkImpl，<strong>NetworkImpl使用前置声明，实现对用户隐藏</strong>。<br>使用指向实现的指针的方式定义接口，接口类对象的创建和销毁可以由用户负责，因此用户可以选择将Network类的对象创建在栈上，生命周期自动管理。<br>使用指向实现的指针定义接口具有良好的通用性，用户能够直接创建和销毁接口对象，并且增加新的接口函数不影响二进制兼容性，便于系统的演进。</p>
+<blockquote>
+<p>该接口实现增加了一层由接口类到实现类的转发开销</p>
+</blockquote>
+<h1 id="Object-Interface"><a href="#Object-Interface" class="headerlink" title="Object-Interface"></a>Object-Interface</h1><p>思想是利用C++的多态特性，将接口定义为虚基类，接口功能定义为虚函数。具体的实现继承基类，比较适用于一种接口有很多种实现方式的情形。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Person</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Person</span>();</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Person</span>();</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> std::string&amp; <span class="title">getName</span><span class="params">()</span> </span>= <span class="number">0</span>;<span class="comment">//纯虚函数，保证了调用者不会基于接口类进行实例化操作。</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">enum</span> <span class="title class_">GENDER</span> &#123;<span class="comment">//定义了性别属性，用于区分不同的实现类对象</span></span><br><span class="line">    MALE,</span><br><span class="line">    FEMALE</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">Person* <span class="title">createPerson</span><span class="params">(GENDER gender, std::string&amp; name)</span></span>;<span class="comment">//全局函数，用于创建不同的实现类对象。</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// create接口的实现方式</span></span><br><span class="line"><span class="function">Person* <span class="title">createPerson</span><span class="params">(GENDER gender, std::string&amp; name)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Person* p;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (gender) &#123;</span><br><span class="line">        <span class="keyword">case</span> MALE:</span><br><span class="line">            p = <span class="keyword">new</span> <span class="built_in">Male</span>(name);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> FEMALE:</span><br><span class="line">            p = <span class="keyword">new</span> <span class="built_in">Female</span>(name);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;wrong gender!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用虚函数定义接口简单直接，但是有很多弊端：</p>
+<ul>
+<li>虚函数开销：虚函数调用需要使用虚函数表指针间接调用，运行时才能决定调用哪个函数，无法在编译链接期间内联优化。实际上调用接口在编译期间就能确定调用哪个函数，无需虚函数的动态特性。</li>
+<li>二进制兼容：由于虚函数是按照索引查询虚函数表来调用，增加虚函数会造成索引变化，新接口不能在二进制层面兼容老接口，而且由于用户可能继承了Network接口类，在末尾增加虚函数也有风险，因此虚函数接口一经发布，难以修改。</li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a href="https://segmentfault.com/a/1190000023877419">https://segmentfault.com/a/1190000023877419</a><br><a href="https://www.jianshu.com/p/2f870b7a3434">https://www.jianshu.com/p/2f870b7a3434</a></p>
+]]></content>
+      <categories>
+        <category>c++</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>C++项目组织构建工具CMake</title>
+    <url>/2021/10/16/cmake/</url>
+    <content><![CDATA[<p>CMake是一个跨平台的构架工具，它本身并不参与构建，而是通过解析CMakeLists.txt来生成Makefile，最终完成构建。<br>使用CMake的本质就是学习如何正确编写CMakelists.txt来表示项目的构建规则。</p>
+<span id="more"></span>
+<h1 id="cmake的基本使用"><a href="#cmake的基本使用" class="headerlink" title="cmake的基本使用"></a>cmake的基本使用</h1><p>以一个简单的<code>CalculatorDemo</code>为例来总结CMakeLists.txt的基本使用方式。</p>
+<h2 id="vscode插件使用"><a href="#vscode插件使用" class="headerlink" title="vscode插件使用"></a>vscode插件使用</h2><p>我们可以使用vscode的<code>CMake Tools</code>插件来加快开发速度。<br>命令面板输入 <code>Cmake:Quick Start</code>, 然后指定编译器版本、项目名称和构建目标，然后系统会自动的在<code>CalculatorDemo</code>下创建两个文件如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">.</span><br><span class="line">├── CMakeLists.txt</span><br><span class="line">└── CalculatorDemo.cpp</span><br></pre></td></tr></table></figure>
+<p>其中<code>CMakeLists.txt</code>如下:</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定项目编译所需的最低cmake版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.0</span>.<span class="number">0</span>)</span><br><span class="line"><span class="comment"># 指定项目名称和版本</span></span><br><span class="line"><span class="keyword">project</span>(CalculatorDemo VERSION <span class="number">0.1</span>.<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># include(CTest)</span></span><br><span class="line"><span class="comment"># enable_testing()</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 编译CalculatorDemo.cpp为一个libray</span></span><br><span class="line"><span class="keyword">add_library</span>(CalculatorDemo CalculatorDemo.cpp)</span><br><span class="line"></span><br><span class="line"><span class="comment"># set(CPACK_PROJECT_NAME $&#123;PROJECT_NAME&#125;)</span></span><br><span class="line"><span class="comment"># set(CPACK_PROJECT_VERSION $&#123;PROJECT_VERSION&#125;)</span></span><br><span class="line"><span class="comment"># include(CPack)</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li>CPack和CTest是插件为我们自动添加的测试和打包模块，先注释掉，后面再总结。其他的是构建项目的必须部分。</li>
+</ul>
+</blockquote>
+<p>编写一个简单的<code>build.sh</code>构建</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set -x</span><br><span class="line">rm build -rf</span><br><span class="line">mkdir build</span><br><span class="line">cd build</span><br><span class="line">cmake ..</span><br><span class="line">make -j</span><br></pre></td></tr></table></figure>
+<img src="build.png" width="50%" height="50%">
+可以看到成功编译了一个名为libCalculatorDemo.a的静态库文件。
+
+<p>现在我们要对<code>CMakeLists.txt</code>进行一些修改。</p>
+<h2 id="设置build-type"><a href="#设置build-type" class="headerlink" title="设置build type"></a>设置build type</h2><p>一共有四种可选项：<code>Debug/Release/RelWithDebInfo/MinSizeRel</code></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">NOT</span> CMAKE_BUILD_TYPE)</span><br><span class="line">  <span class="keyword">set</span>(CMAKE_BUILD_TYPE <span class="string">&quot;Release&quot;</span> CACHE <span class="keyword">STRING</span> <span class="string">&quot;Choose the type of build,</span></span><br><span class="line"><span class="string">    options are: Debug/Release/RelWithDebInfo/MinSizeRel.&quot;</span> FORCE)</span><br><span class="line"><span class="keyword">endif</span>()</span><br></pre></td></tr></table></figure>
+<h2 id="设置verbose-makefile"><a href="#设置verbose-makefile" class="headerlink" title="设置verbose makefile"></a>设置verbose makefile</h2><p>该参数在开发调试时可以方便的查看编译命令是否正确</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set(CMAKE_VERBOSE_MAKEFILE ON)</span><br></pre></td></tr></table></figure>
+<h2 id="设置编译语言"><a href="#设置编译语言" class="headerlink" title="设置编译语言"></a>设置编译语言</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># project中指定默认的编译语言</span></span><br><span class="line"><span class="keyword">project</span>(CalculatorDemo LANGUAGES C CXX VERSION <span class="number">0.1</span>.<span class="number">0</span>)</span><br><span class="line"><span class="comment"># 启用某种语言，比如CUDA</span></span><br><span class="line"><span class="keyword">enable_language</span>(CUDA)</span><br></pre></td></tr></table></figure>
+<h2 id="设置C-标准"><a href="#设置C-标准" class="headerlink" title="设置C++标准"></a>设置C++标准</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">14</span>)</span><br><span class="line"><span class="comment"># 如果不设置，或者为OFF，则指定版本不可用时，会使用上一版本。</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD_REQUIRED <span class="keyword">ON</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="设置编译为位置无关的代码"><a href="#设置编译为位置无关的代码" class="headerlink" title="设置编译为位置无关的代码"></a>设置编译为位置无关的代码</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_POSITION_INDEPENDENT_CODE <span class="keyword">ON</span>)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>这句的效果相当于设置编译选项<code>-fPIC</code>或者<code>-fPIE</code>，用于生成位置无关的代码。以使代码在加载到内存时使用相对地址，所有对固定地址的访问都通过全局偏移表(GOT)来实现。</p>
+</blockquote>
+<ul>
+<li>fPIC和fPIE的区别：fPIC用于位置无关的动态库，fPIE用于生成位置无关的可执行代码（二进制）</li>
+</ul>
+<h2 id="设置C-编译选项"><a href="#设置C-编译选项" class="headerlink" title="设置C++编译选项"></a>设置C++编译选项</h2><p>可以自定义编译选项，比如开启所有的警告<code>-Wall</code>，有两种方式设定编译选项，例如：</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -Wall&quot;</span>)</span><br><span class="line"><span class="keyword">add_compile_options</span>(<span class="string">&quot;-Wall&quot;</span>)</span><br></pre></td></tr></table></figure>
+<h1 id="CMake项目管理"><a href="#CMake项目管理" class="headerlink" title="CMake项目管理"></a>CMake项目管理</h1><p>一般来说大型的项目通常都包含很多目录和文件，不同模块间有很复杂的依赖关系, 我们修改<code>CalculatorDemo</code>目录如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">.</span><br><span class="line">├── CMakeLists.txt</span><br><span class="line">├── build.sh</span><br><span class="line">├── include</span><br><span class="line">│   └── calculator.h</span><br><span class="line">├── src</span><br><span class="line">│   └── calculator.cpp</span><br><span class="line">└── test</span><br><span class="line">    ├── CMakeLists.txt</span><br><span class="line">    └── test_calculator.cpp</span><br></pre></td></tr></table></figure>
+<p>这是一种比较典型的目录组织方式：</p>
+<ul>
+<li>include目录为对外需要暴露的接口</li>
+<li>src目录中是项目的核心实现</li>
+<li>test目录中存放单元测试。</li>
+</ul>
+<p>顶层的<code>CMakeLists.txt</code>的代码如下</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.0</span>.<span class="number">0</span>)</span><br><span class="line"><span class="keyword">project</span>(CalculatorDemo LANGUAGES C CXX VERSION <span class="number">0.1</span>.<span class="number">0</span>)</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">NOT</span> CMAKE_BUILD_TYPE)</span><br><span class="line">  <span class="keyword">set</span>(CMAKE_BUILD_TYPE</span><br><span class="line">      Release</span><br><span class="line">      CACHE <span class="keyword">STRING</span> <span class="string">&quot;Choose the type of build,</span></span><br><span class="line"><span class="string">    options are: Debug/Release/RelWithDebInfo/MinSizeRel.&quot;</span> FORCE)</span><br><span class="line"><span class="keyword">endif</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD_REQUIRED <span class="keyword">ON</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_VERBOSE_MAKEFILE <span class="keyword">ON</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">message</span>(STATUS <span class="variable">$&#123;CMAKE_CXX_FLAGS&#125;</span>)</span><br><span class="line"><span class="keyword">add_compile_options</span>(<span class="string">&quot;-Wall&quot;</span>)</span><br><span class="line"><span class="keyword">add_library</span>(CalculatorDemo SHARED src/calculator.cpp)</span><br><span class="line"><span class="keyword">target_include_directories</span>(CalculatorDemo PUBLIC <span class="keyword">include</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">add_subdirectory</span>(<span class="keyword">test</span>)</span><br></pre></td></tr></table></figure>
+<p>test的<code>CMakeLists.txt</code>如下：</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">add_executable</span>(test_demo test_calculator.cpp)</span><br><span class="line"><span class="keyword">target_include_directories</span>(test_demo PUBLIC <span class="variable">$&#123;PROJECT_SOURCE_DIR&#125;</span>)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(test_demo PUBLIC CalculatorDemo)</span><br></pre></td></tr></table></figure>
+
+<h2 id="现代CMake的思想"><a href="#现代CMake的思想" class="headerlink" title="现代CMake的思想"></a>现代CMake的思想</h2><p>现代化的CMake是围绕<code>Target</code>和<code>Property</code>来定义的，并且竭力避免出现变量<code>variable</code>的定义。Variable横行是典型CMake2.8时期的风格。现代版的CMake更像是在遵循OOP的规则，通过<code>target</code>来约束<code>link</code>、<code>compile</code>等相关属性的作用域。</p>
+<h2 id="关键字"><a href="#关键字" class="headerlink" title="关键字"></a>关键字</h2><p>关键字一共有三个，指定的是目标文件依赖项的使用范围</p>
+<ul>
+<li><code>PRIVATE</code>: 私有的。表示Target的属性只定义在当前Target中，任何依赖当前Target的Target不共享PRIVATE关键字下定义的属性。</li>
+<li><code>INTERFACE</code>: 表示Target的属性不适用于其自身，而只适用于依赖其的Target。</li>
+<li><code>PUBLIC</code>: Target的属性既适用于其自身，也适用于依赖其的Target。</li>
+</ul>
+<h2 id="生成target"><a href="#生成target" class="headerlink" title="生成target"></a>生成target</h2><p>cmake可以生成两种类型的target：<strong>库文件</strong>或者<strong>可执行文件</strong>，如下：</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 生成库</span></span><br><span class="line"><span class="keyword">add_library</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;源文件<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="comment"># 生成可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;源文件<span class="keyword">list</span>&gt;)</span><br></pre></td></tr></table></figure>
+<p>在Demo中，先将src目录编译为库文件<code>CalculatorDemo.so</code>（通常用于对外发布），test目录编译测试代码为可执行文件，依赖刚才编译好的库文件，用于测试接口是否正确。</p>
+<h2 id="指定include路径"><a href="#指定include路径" class="headerlink" title="指定include路径"></a>指定include路径</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定某个target的头文件目录</span></span><br><span class="line"><span class="keyword">target_include_directories</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;<span class="keyword">include</span>目录<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="comment"># 指定全局的头文件目录（不推荐）</span></span><br><span class="line"><span class="keyword">include_directories</span>(&lt;<span class="keyword">include</span>路径<span class="keyword">list</span>&gt;)</span><br></pre></td></tr></table></figure>
+
+<h2 id="指定依赖库的路径"><a href="#指定依赖库的路径" class="headerlink" title="指定依赖库的路径"></a>指定依赖库的路径</h2><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定某个target的依赖库路径</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(&lt;<span class="keyword">target</span>名称&gt; &lt;关键字&gt; &lt;lib路径<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="comment"># 指定全局的依赖路径</span></span><br><span class="line"><span class="keyword">link_directories</span>(&lt;lib所在的目录<span class="keyword">list</span>&gt;)</span><br><span class="line"><span class="keyword">link_libraries</span>(&lt;lib路径<span class="keyword">list</span>&gt;)</span><br></pre></td></tr></table></figure>
+
+<h2 id="add-subdirectory"><a href="#add-subdirectory" class="headerlink" title="add_subdirectory"></a>add_subdirectory</h2><h2 id="设置install规则"><a href="#设置install规则" class="headerlink" title="设置install规则"></a>设置install规则</h2>]]></content>
+      <categories>
+        <category>c++</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Python包的构建与分发——setup.py</title>
+    <url>/2021/10/09/python-setup/</url>
+    <content><![CDATA[<p>python项目或者Python与C++的混合项目中必然要用到setup.py来构建包，在这里总结以下它的使用方式。</p>
+<span id="more"></span>
+<h1 id="构建项目的命令"><a href="#构建项目的命令" class="headerlink" title="构建项目的命令"></a>构建项目的命令</h1><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 在本地构建模块，不安装</span></span><br><span class="line">python setup.py build</span><br><span class="line"><span class="comment"># 将项目安装到pip/conan环境中</span></span><br><span class="line">python setup.py install</span><br><span class="line"><span class="comment"># 安装项目的软链接到pip/conan环境中（适用于开发中的项目）</span></span><br><span class="line">python setup.py develop</span><br><span class="line"><span class="comment"># 在local目录构建whl包</span></span><br><span class="line">python setup.py bdist_wheel</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等同于python setup.py install</span></span><br><span class="line">pip install .</span><br><span class="line"><span class="comment"># 等同于python setup.py develop, -e即editable</span></span><br><span class="line">pip install -e .</span><br></pre></td></tr></table></figure>
+<h1 id="Setuptools"><a href="#Setuptools" class="headerlink" title="Setuptools"></a>Setuptools</h1><p>distutils是python官方的打包工具，Setuptool是基于distutils的增强版本，目前都通过这个工具来打包。一般conda和pip的python虚拟环境都会带有Setuptools.<br><code>setup.py</code>其实就是setuptools的配置文件。需要完善其中的setup函数来完成打包，基本命令如下。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">from setuptools import setup</span><br><span class="line">setup()</span><br></pre></td></tr></table></figure>
+<h1 id="setup-py的参数配置"><a href="#setup-py的参数配置" class="headerlink" title="setup.py的参数配置"></a>setup.py的参数配置</h1><p>以一个实现加法功能的python和C++混合编程项目为例介绍setup.py的常见参数。</p>
+]]></content>
+      <categories>
+        <category>python</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>浮点数在计算机中的表示</title>
+    <url>/2021/09/07/float/</url>
+    <content><![CDATA[<p>计算机中，小数的表示方法一般是用浮点数表达法来表示的。</p>
+<span id="more"></span>
+<p>浮点数表达法采用了科学计数法来表达实数，以510.375为例，科学计数法可以表示成以下几种形式，可以看到不同的表示形式其小数点的位置是漂浮不定的，也即浮点数名称的由来。</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">5.10375 * 10 ^ 2</span><br><span class="line">51.0375 * 10 ^ 1</span><br><span class="line">510.375 * 10 ^ 0</span><br><span class="line">5103.75 * 10 ^ -1</span><br><span class="line">51037.5 * 10 ^ -2</span><br></pre></td></tr></table></figure>
+<p>由以上例子可以看出要表示一个浮点数，需要以下几个部分：</p>
+<table>
+<thead>
+<tr>
+<th>符号位S</th>
+<th>尾数M</th>
+<th>基数N</th>
+<th>指数E</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>5.10325</td>
+<td>10</td>
+<td>2</td>
+</tr>
+</tbody></table>
+<h1 id="IEEE-754规范"><a href="#IEEE-754规范" class="headerlink" title="IEEE 754规范"></a>IEEE 754规范</h1><p>上述例子可以看出浮点数有很多种写法，现代计算机中的浮点数的表示规范都是遵循<strong>IEEE 754</strong>标准的，其规定了底数N为2，所有的浮点数由一个三元组表示：$$V(S,M,E) &#x3D; (-1)^S * M * 2^E$$<br>在计算机中的表示如下图：<br><img src="float1.png" width="80%" height="80%"></p>
+<p>其中：</p>
+<ul>
+<li>S：用一个bit表示，0表示为正数，1表示为负数</li>
+<li>E: 规定这里保存的是阶码的<strong>移码</strong></li>
+<li>M: 规定M的有效值范围为<code>[1,2)</code>之间，也就是说尾数形式默认为<code>1.xyz</code>，为了节约空间，省略小数点前的1，所以尾数实际表达的二进制范围是<code>f+1</code>个bit。</li>
+</ul>
+<blockquote>
+<p>TODO:规格化和非规格化浮点数</p>
+</blockquote>
+<h1 id="FP32-x2F-FP16-x2F-BF16-x2F-TF32的表示规则"><a href="#FP32-x2F-FP16-x2F-BF16-x2F-TF32的表示规则" class="headerlink" title="FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则"></a>FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则</h1><img src="float2.png" width="80%" height="80%">
+
+<blockquote>
+<p>以1.0f为例，来介绍float在计算机中的表示<br>0 01111111 00000000000000000000000<br><strong>一个fp16到fp32的转换</strong><br>1 01110111 10001001110000000000000<br>1 00111 1000100111</p>
+</blockquote>
+<h1 id="浮点精度问题"><a href="#浮点精度问题" class="headerlink" title="浮点精度问题"></a>浮点精度问题</h1><p>浮点数计算在一些情形下不满足结合律：<br><code>(a + b) + (c + d) != (a + c) + (b + d)</code><br>gcc某个快速近似计算会导致 <code>a * b != b * a</code></p>
+<h2 id="大数吃小数"><a href="#大数吃小数" class="headerlink" title="大数吃小数"></a>大数吃小数</h2><p>这个问题和浮点数的表示方式有些关系。以FP32为例，已知FP32的尾数是23位，那么尾数的最大表示范围就是2 ^ 23 &#x3D; 8388608，一共7位，这意味着float类型最多能有7位有效数字，但是能绝对能保证的为6位，也即float的精度为6<del>7位。（平时讲有效数字是6</del>7位 ，指10进制。）</p>
+<p>我们用两个float相加，设有a&#x3D;123456;b&#x3D;2.189；a+b应该是123458.189但是由于float的精度只有小数点后6-7位，所以必然得不到123458.189，后面的89可能会截掉，8不一定，9是必然会截掉的。好的，才做一个加法就产生至少了0.009的误差，做1000个这样的加法，误差就是9了，这显然不是我们想要的。</p>
+<blockquote>
+<p>Kahan’s Summation Formula可以用来解决大数吃小数的问题<br><a href="https://www.geeksforgeeks.org/kahan-summation-algorithm/">https://www.geeksforgeeks.org/kahan-summation-algorithm/</a></p>
+</blockquote>
+<p>kahan求和算法是这样做的：sum&#x3D;a+b（不准确）; temp&#x3D; (a+b)-a-b;temp等于多少呢，初看这不就是0吗？不是的，计算机此时算的可不是0，而是等于-0.009，就是被截断的那个小数。通过一个临时变量我们就记住了这个误差，当计算下一个加法的时候，可以把这个误差补上，并且更新误差到sum。</p>
+<p>（to be continued….)</p>
+]]></content>
+      <categories>
+        <category>计算机体系结构</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>vim配置</title>
+    <url>/2021/05/31/vim/</url>
+    <content><![CDATA[<p>稍微调教一下vim</p>
+<span id="more"></span>
+<h1 id="基本配置"><a href="#基本配置" class="headerlink" title="基本配置"></a>基本配置</h1><p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
+<p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
+
+<p>vi .vim_runtime&#x2F;vimrcs&#x2F;basic.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
+
+<p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>
+<h1 id="支持的插件"><a href="#支持的插件" class="headerlink" title="支持的插件"></a>支持的插件</h1><p>(更新中，理解了一个就更新一个)</p>
+<h2 id="ctrlp"><a href="#ctrlp" class="headerlink" title="ctrlp"></a>ctrlp</h2><p>模糊搜索插件，已经mapping到了快捷键<code>ctrl + F</code></p>
+<h2 id="nerdtree"><a href="#nerdtree" class="headerlink" title="nerdtree"></a>nerdtree</h2>]]></content>
+      <categories>
+        <category>系统配置相关</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>linux环境基本配置</title>
+    <url>/2021/05/31/linux-config/</url>
+    <content><![CDATA[<p>个人比较习惯的一些命令行和终端配置，留在博客里方便以后复制粘贴。</p>
+<span id="more"></span>
+<p>终端我一般用bash或者zsh，bash经常是在公司里使用的，zsh就在自己机器上用</p>
+<h1 id="bashrc配置"><a href="#bashrc配置" class="headerlink" title="bashrc配置"></a>bashrc配置</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#设置终端主题，支持显示git分支</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">git_branch_prompt</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">local</span> branch=$(git symbolic-ref --short -q HEAD 2&gt;/dev/null)</span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$branch</span> ]; <span class="keyword">then</span> <span class="built_in">echo</span> <span class="string">&quot;|<span class="variable">$branch</span>&quot;</span>; <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> PS1=<span class="string">&quot;\[\033[01;36m\]\u@\[\033[01;33m\]\h.<span class="variable">$add</span> \[\033[0;36m\]\w\[\033[0;32m\]\$(git_branch_prompt)\[\033[37;36m\]\\$ \[\033[00m\]&quot;</span></span><br><span class="line"><span class="comment"># 修改指令避免不可挽回的删除</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">mv</span>=<span class="string">&quot;mv -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">cp</span>=<span class="string">&quot;cp -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">rm</span>=<span class="string">&quot;rm -i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动打印当前scp路径</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">sloc</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    myname=`hostname`</span><br><span class="line">    myuser=`<span class="built_in">whoami</span>`</span><br><span class="line">    mypath=`<span class="built_in">pwd</span>`</span><br><span class="line">    <span class="keyword">for</span> arg <span class="keyword">in</span> <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="variable">$myuser</span><span class="string">&quot;@&quot;</span><span class="variable">$myname</span><span class="string">&quot;:&quot;</span><span class="variable">$mypath</span><span class="string">&quot;/&quot;</span><span class="variable">$arg</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># export PS1=&quot;\[\e[37m\][\[\e[32m\]\u@\[\e[35m\]\h. \[\e[34m\]\w\[\e[32m\]\$(git_branch_prompt)\[\e[37m\]]\[\e[0m\]\\$ &quot;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>主要是命令行样式的修改看心情，PS1的颜色修改见下图</p>
+</blockquote>
+<!-- ![image.png](1.png) -->
+<img src="1.png" width="50%" height="50%">
+
+<h1 id="inputrc配置"><a href="#inputrc配置" class="headerlink" title="inputrc配置"></a>inputrc配置</h1><p>只需要在bash里配置（zsh自带），避免了通过<code>ctrl + r</code>来搜索历史命令的麻烦</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot;\e[A&quot;: history-search-backward</span><br><span class="line">&quot;\e[B&quot;: history-search-forward</span><br><span class="line">set show-all-if-ambiguous on</span><br><span class="line">set completion-ignore-case on</span><br></pre></td></tr></table></figure>
+
+<h1 id="Python环境配置"><a href="#Python环境配置" class="headerlink" title="Python环境配置"></a>Python环境配置</h1><h2 id="conda配置"><a href="#conda配置" class="headerlink" title="conda配置"></a>conda配置</h2><p>安装miniconda环境，教程同官方</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh</span><br></pre></td></tr></table></figure>
+<p>配置国内镜像源如下</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/</span><br><span class="line">conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge</span><br><span class="line">conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置搜索时显示通道地址</span></span><br><span class="line">conda config --<span class="built_in">set</span> show_channel_urls <span class="built_in">yes</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 打印当前conda配置(很长一串)</span></span><br><span class="line">conda config --show</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删源</span></span><br><span class="line">conda config --remove channels + 地址 或者直接在.condarc中配置，不用时删掉</span><br></pre></td></tr></table></figure>
+<h2 id="pip配置"><a href="#pip配置" class="headerlink" title="pip配置"></a>pip配置</h2><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 配置科大镜像源</span></span><br><span class="line">pip config <span class="built_in">set</span> global.index-url https://pypi.mirrors.ustc.edu.cn/simple</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载whl包到本地</span></span><br><span class="line">pip download -d pip_package &lt;package_name&gt;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="C-开发环境配置"><a href="#C-开发环境配置" class="headerlink" title="C++开发环境配置"></a>C++开发环境配置</h1><h2 id="git配置"><a href="#git配置" class="headerlink" title="git配置"></a>git配置</h2><p>在centos7上安装最新版本的git：<a href="https://computingforgeeks.com/how-to-install-latest-version-of-git-git-2-x-on-centos-7/">参考文档</a></p>
+<h3 id="配置ssh方式登录git"><a href="#配置ssh方式登录git" class="headerlink" title="配置ssh方式登录git"></a>配置ssh方式登录git</h3><p>推荐使用ssh的方式登录git, 原因是http方式需要输入用户名和密码，且密码会明文保存在本机中，不够安全。<br>通过以下命令生成ras秘钥，把公钥保存在远程仓库的对应位置中。</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">vi ~/.ssh/config</span><br><span class="line">ssh-keygen -t  rsa  -C <span class="string">&quot;这里换上你的邮箱&quot;</span></span><br><span class="line"><span class="built_in">cat</span> id_rsa.pub</span><br></pre></td></tr></table></figure>
+<h3 id="gitconfig配置"><a href="#gitconfig配置" class="headerlink" title="gitconfig配置"></a>gitconfig配置</h3><p>vi ~&#x2F;.gitconfig</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[color]</span><br><span class="line">    ui = true</span><br><span class="line">[user]</span><br><span class="line">    email = chenchu.zs@foxmail.com</span><br><span class="line">    name = chenchu.zs</span><br><span class="line">[http]</span><br><span class="line">    cookiefile = ~/.gitcookies</span><br><span class="line">[credential]</span><br><span class="line">	helper = store</span><br></pre></td></tr></table></figure>
+<h2 id="gcc版本配置"><a href="#gcc版本配置" class="headerlink" title="gcc版本配置"></a>gcc版本配置</h2><p>使用devtoolset来启用高版本的gcc， <a href="https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/">参考文档</a></p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment">#安装源</span></span><br><span class="line">sudo yum install centos-release-scl</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装devtoolset</span></span><br><span class="line">sudo yum install devtoolset-7 -y</span><br><span class="line"></span><br><span class="line"><span class="comment">#启用</span></span><br><span class="line">然后通过<span class="built_in">source</span> /opt/rh/devtoolset-7/enable 即可启用</span><br></pre></td></tr></table></figure>
+<p>注意, 如果系统gcc版本小于5，则devtoolset使用的还会是较低版本的glibc。需要注意glibc版本的问题和abi的问题。</p>
+<p><strong>查看glibc版本</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">strings /lib64/libc.so.6 | grep GLIBC</span><br></pre></td></tr></table></figure>
+
+<h1 id="ssh配置"><a href="#ssh配置" class="headerlink" title="ssh配置"></a>ssh配置</h1><p>给需要链接的远程服务器做个简单配置。编辑<code>.ssh/config</code>, 如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host 255.255.255.255</span><br><span class="line">HostName fake_server</span><br><span class="line">User chenchu.zs</span><br><span class="line">Port 8088</span><br></pre></td></tr></table></figure>
+<p>有时候远程服务器长时间没有操作会自动把你踢下来，配置一下自动重连和记忆功能，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host *</span><br><span class="line">    ControlMaster auto</span><br><span class="line">    ControlPath /tmp/ssh_connection_%h_%p_%r.sock</span><br><span class="line">    ServerAliveInterval 80</span><br><span class="line">    ServerAliveCountMax 6</span><br><span class="line">    ForwardAgent yes</span><br><span class="line">    CheckHostIP no</span><br><span class="line">    Compression yes</span><br><span class="line">    ControlPersist 72h</span><br><span class="line">    StrictHostKeyChecking=no</span><br><span class="line">    GSSAPIAuthentication=no</span><br></pre></td></tr></table></figure>
+
+<h1 id="zsh配置"><a href="#zsh配置" class="headerlink" title="zsh配置"></a>zsh配置</h1><ol>
+<li>安装<code>oh-my-zsh</code></li>
+<li>在<code>.zshrc</code>中修改字段<code>ZSH_THEME=&quot;pygmalion&quot;</code></li>
+</ol>
+]]></content>
+      <categories>
+        <category>系统配置相关</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Docker学习笔记——容器container</title>
     <url>/2021/03/14/docker-container/</url>
     <content><![CDATA[<h1 id="查看本机已有的容器"><a href="#查看本机已有的容器" class="headerlink" title="查看本机已有的容器"></a>查看本机已有的容器</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看本机所有的容器</span></span><br><span class="line">docker ps -a</span><br><span class="line"><span class="comment"># 查看本机正在运行的容器</span></span><br><span class="line">docker ps</span><br></pre></td></tr></table></figure>
@@ -212,6 +436,26 @@
       </categories>
   </entry>
   <entry>
+    <title>Docker学习笔记——镜像image</title>
+    <url>/2021/03/13/docker-image/</url>
+    <content><![CDATA[<h1 id="查看已有的镜像信息"><a href="#查看已有的镜像信息" class="headerlink" title="查看已有的镜像信息"></a>查看已有的镜像信息</h1><p>使用命令<code>docker images</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker images</span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">php                 latest              fe1a2c2228f4        2 days ago          364 MB</span><br><span class="line">mongo               latest              87bde25ffc68        2 days ago          326.7 MB</span><br><span class="line">ubuntu              latest              42118e3df429        9 days ago          124.8 MB</span><br><span class="line">redis               latest              4465e4bcad80        6 weeks ago         185.7 MB</span><br><span class="line">nginx               latest              0d409d33b27e        8 weeks ago         182.8 MB</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h1 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h1><p>删除镜像之前要先删掉根据镜像建立的容器，然后才可以删除对应的镜像。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 删除指定id的镜像</span></span><br><span class="line">docker rmi &lt;image <span class="built_in">id</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除当前机器上的无用镜像(名称或标签为none)</span></span><br><span class="line">sudo docker images | grep <span class="string">&#x27;&lt;none&gt;&#x27;</span> | awk <span class="string">&#x27;&#123;print $3&#125;&#x27;</span>| xargs sudo docker rmi -f </span><br></pre></td></tr></table></figure>
+<h1 id="下载远程镜像"><a href="#下载远程镜像" class="headerlink" title="下载远程镜像"></a>下载远程镜像</h1><p>命令：<code>docker pull NAME[:TAG]</code></p>
+<blockquote>
+<p>不指定tag的时候默认使用:latest</p>
+</blockquote>
+<p><strong>提高下载速度的技巧</strong><br>国外的docker下载速度太慢，可以找国内阿里云的镜像之类的。<br>登录阿里云账号：在类似的路径下搜索<a href="https://cr.console.aliyun.com/cn-beijing/instances/images">https://cr.console.aliyun.com/cn-beijing/instances/images</a>，比如<br><img src="/2021/03/13/docker-image/1.png" alt="image.png"></p>
+<p>也可以配置docker加速器：<a href="https://blog.csdn.net/liu865033503/article/details/95936640">https://blog.csdn.net/liu865033503/article/details/95936640</a></p>
+<h1 id="上传镜像"><a href="#上传镜像" class="headerlink" title="上传镜像"></a>上传镜像</h1><p>命令：<code>docker push NAME[:TAG]</code></p>
+]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Docker学习笔记——环境配置</title>
     <url>/2021/03/12/docker-env/</url>
     <content><![CDATA[<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>使用yum方式安装，但是首先要保证有centos的yum源，然后<code>yum install docker-ce</code></p>
@@ -227,26 +471,6 @@
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo groupadd docker</span><br><span class="line">sudo usermod -aG docker <span class="variable">$USER</span></span><br></pre></td></tr></table></figure>
 <p>如果是虚拟机，则需要reboot机器才能生效<br>如果无法reboot，那通过<code>newgrp docker</code>，使之在当前目录生效</p>
 <p>开启了sudo权限之后，可以通过vscode远程访问docker容器</p>
-]]></content>
-      <categories>
-        <category>docker</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>Docker学习笔记——镜像image</title>
-    <url>/2021/03/13/docker-image/</url>
-    <content><![CDATA[<h1 id="查看已有的镜像信息"><a href="#查看已有的镜像信息" class="headerlink" title="查看已有的镜像信息"></a>查看已有的镜像信息</h1><p>使用命令<code>docker images</code></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker images</span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">php                 latest              fe1a2c2228f4        2 days ago          364 MB</span><br><span class="line">mongo               latest              87bde25ffc68        2 days ago          326.7 MB</span><br><span class="line">ubuntu              latest              42118e3df429        9 days ago          124.8 MB</span><br><span class="line">redis               latest              4465e4bcad80        6 weeks ago         185.7 MB</span><br><span class="line">nginx               latest              0d409d33b27e        8 weeks ago         182.8 MB</span><br></pre></td></tr></table></figure>
-<span id="more"></span>
-<h1 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h1><p>删除镜像之前要先删掉根据镜像建立的容器，然后才可以删除对应的镜像。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 删除指定id的镜像</span></span><br><span class="line">docker rmi &lt;image <span class="built_in">id</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除当前机器上的无用镜像(名称或标签为none)</span></span><br><span class="line">sudo docker images | grep <span class="string">&#x27;&lt;none&gt;&#x27;</span> | awk <span class="string">&#x27;&#123;print $3&#125;&#x27;</span>| xargs sudo docker rmi -f </span><br></pre></td></tr></table></figure>
-<h1 id="下载远程镜像"><a href="#下载远程镜像" class="headerlink" title="下载远程镜像"></a>下载远程镜像</h1><p>命令：<code>docker pull NAME[:TAG]</code></p>
-<blockquote>
-<p>不指定tag的时候默认使用:latest</p>
-</blockquote>
-<p><strong>提高下载速度的技巧</strong><br>国外的docker下载速度太慢，可以找国内阿里云的镜像之类的。<br>登录阿里云账号：在类似的路径下搜索<a href="https://cr.console.aliyun.com/cn-beijing/instances/images">https://cr.console.aliyun.com/cn-beijing/instances/images</a>，比如<br><img src="/2021/03/13/docker-image/1.png" alt="image.png"></p>
-<p>也可以配置docker加速器：<a href="https://blog.csdn.net/liu865033503/article/details/95936640">https://blog.csdn.net/liu865033503/article/details/95936640</a></p>
-<h1 id="上传镜像"><a href="#上传镜像" class="headerlink" title="上传镜像"></a>上传镜像</h1><p>命令：<code>docker push NAME[:TAG]</code></p>
 ]]></content>
       <categories>
         <category>docker</category>
@@ -331,51 +555,85 @@
       </tags>
   </entry>
   <entry>
-    <title>linux环境基本配置</title>
-    <url>/2021/05/31/linux-config/</url>
-    <content><![CDATA[<p>个人比较习惯的一些命令行和终端配置，留在博客里方便以后复制粘贴。</p>
+    <title>算法笔记——并查集</title>
+    <url>/2017/02/28/union-find/</url>
+    <content><![CDATA[<p>刷题碰到这种问题不止一次了，总是写的磕磕绊绊。是时候总结一下了。</p>
 <span id="more"></span>
-<p>终端我一般用bash或者zsh，bash经常是在公司里使用的，zsh就在自己机器上用</p>
-<h1 id="bashrc配置"><a href="#bashrc配置" class="headerlink" title="bashrc配置"></a>bashrc配置</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#设置终端主题，支持显示git分支</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">git_branch_prompt</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">local</span> branch=$(git symbolic-ref --short -q HEAD 2&gt;/dev/null)</span><br><span class="line">    <span class="keyword">if</span> [ <span class="variable">$branch</span> ]; <span class="keyword">then</span> <span class="built_in">echo</span> <span class="string">&quot;|<span class="variable">$branch</span>&quot;</span>; <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> PS1=<span class="string">&quot;\[\033[01;36m\]\u@\[\033[01;33m\]\h.<span class="variable">$add</span> \[\033[0;36m\]\w\[\033[0;32m\]\$(git_branch_prompt)\[\033[37;36m\]\\$ \[\033[00m\]&quot;</span></span><br><span class="line"><span class="comment"># 修改指令避免不可挽回的删除</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">mv</span>=<span class="string">&quot;mv -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">cp</span>=<span class="string">&quot;cp -i&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">rm</span>=<span class="string">&quot;rm -i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自动打印当前scp路径</span></span><br><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">sloc</span></span>()</span><br><span class="line">&#123;</span><br><span class="line">    myname=`hostname`</span><br><span class="line">    myuser=`<span class="built_in">whoami</span>`</span><br><span class="line">    mypath=`<span class="built_in">pwd</span>`</span><br><span class="line">    <span class="keyword">for</span> arg <span class="keyword">in</span> <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="variable">$myuser</span><span class="string">&quot;@&quot;</span><span class="variable">$myname</span><span class="string">&quot;:&quot;</span><span class="variable">$mypath</span><span class="string">&quot;/&quot;</span><span class="variable">$arg</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># export PS1=&quot;\[\e[37m\][\[\e[32m\]\u@\[\e[35m\]\h. \[\e[34m\]\w\[\e[32m\]\$(git_branch_prompt)\[\e[37m\]]\[\e[0m\]\\$ &quot;</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>主要是命令行样式的修改看心情，PS1的颜色修改见下图</p>
-</blockquote>
-<!-- ![image.png](1.png) -->
-<img src="1.png" width="50%" height="50%">
-
-<h1 id="inputrc配置"><a href="#inputrc配置" class="headerlink" title="inputrc配置"></a>inputrc配置</h1><p>只需要在bash里配置（zsh自带），避免了通过<code>ctrl + r</code>来搜索历史命令的麻烦</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot;\e[A&quot;: history-search-backward</span><br><span class="line">&quot;\e[B&quot;: history-search-forward</span><br><span class="line">set show-all-if-ambiguous on</span><br><span class="line">set completion-ignore-case on</span><br></pre></td></tr></table></figure>
-
-<h1 id="Python环境配置"><a href="#Python环境配置" class="headerlink" title="Python环境配置"></a>Python环境配置</h1><h2 id="conda配置"><a href="#conda配置" class="headerlink" title="conda配置"></a>conda配置</h2><p>安装miniconda环境，教程同官方</p>
-<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh</span><br></pre></td></tr></table></figure>
-<p>配置国内镜像源如下</p>
-<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/</span><br><span class="line">conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge</span><br><span class="line">conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置搜索时显示通道地址</span></span><br><span class="line">conda config --<span class="built_in">set</span> show_channel_urls <span class="built_in">yes</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 打印当前conda配置(很长一串)</span></span><br><span class="line">conda config --show</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删源</span></span><br><span class="line">conda config --remove channels + 地址 或者直接在.condarc中配置，不用时删掉</span><br></pre></td></tr></table></figure>
-<h2 id="pip配置"><a href="#pip配置" class="headerlink" title="pip配置"></a>pip配置</h2><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 配置科大镜像源</span></span><br><span class="line">pip config <span class="built_in">set</span> global.index-url https://pypi.mirrors.ustc.edu.cn/simple</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载whl包到本地</span></span><br><span class="line">pip download -d pip_package &lt;package_name&gt;</span><br></pre></td></tr></table></figure>
-
-
-<h1 id="C-开发环境配置"><a href="#C-开发环境配置" class="headerlink" title="C++开发环境配置"></a>C++开发环境配置</h1><h2 id="git配置"><a href="#git配置" class="headerlink" title="git配置"></a>git配置</h2><p>在centos7上安装最新版本的git：<a href="https://computingforgeeks.com/how-to-install-latest-version-of-git-git-2-x-on-centos-7/">参考文档</a></p>
-<h3 id="配置ssh方式登录git"><a href="#配置ssh方式登录git" class="headerlink" title="配置ssh方式登录git"></a>配置ssh方式登录git</h3><p>推荐使用ssh的方式登录git, 原因是http方式需要输入用户名和密码，且密码会明文保存在本机中，不够安全。<br>通过以下命令生成ras秘钥，把公钥保存在远程仓库的对应位置中。</p>
-<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">vi ~/.ssh/config</span><br><span class="line">ssh-keygen -t  rsa  -C <span class="string">&quot;这里换上你的邮箱&quot;</span></span><br><span class="line"><span class="built_in">cat</span> id_rsa.pub</span><br></pre></td></tr></table></figure>
-<h3 id="gitconfig配置"><a href="#gitconfig配置" class="headerlink" title="gitconfig配置"></a>gitconfig配置</h3><p>vi ~&#x2F;.gitconfig</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[color]</span><br><span class="line">    ui = true</span><br><span class="line">[user]</span><br><span class="line">    email = chenchu.zs@foxmail.com</span><br><span class="line">    name = chenchu.zs</span><br><span class="line">[http]</span><br><span class="line">    cookiefile = ~/.gitcookies</span><br><span class="line">[credential]</span><br><span class="line">	helper = store</span><br></pre></td></tr></table></figure>
-<h2 id="gcc版本配置"><a href="#gcc版本配置" class="headerlink" title="gcc版本配置"></a>gcc版本配置</h2><p>使用devtoolset来启用高版本的gcc， <a href="https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/">参考文档</a></p>
-<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment">#安装源</span></span><br><span class="line">sudo yum install centos-release-scl</span><br><span class="line"></span><br><span class="line"><span class="comment">#安装devtoolset</span></span><br><span class="line">sudo yum install devtoolset-7 -y</span><br><span class="line"></span><br><span class="line"><span class="comment">#启用</span></span><br><span class="line">然后通过<span class="built_in">source</span> /opt/rh/devtoolset-7/enable 即可启用</span><br></pre></td></tr></table></figure>
-<p>注意, 如果系统gcc版本小于5，则devtoolset使用的还会是较低版本的glibc。需要注意glibc版本的问题和abi的问题。</p>
-<p><strong>查看glibc版本</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">strings /lib64/libc.so.6 | grep GLIBC</span><br></pre></td></tr></table></figure>
-
-<h1 id="ssh配置"><a href="#ssh配置" class="headerlink" title="ssh配置"></a>ssh配置</h1><p>给需要链接的远程服务器做个简单配置。编辑<code>.ssh/config</code>, 如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host 255.255.255.255</span><br><span class="line">HostName fake_server</span><br><span class="line">User chenchu.zs</span><br><span class="line">Port 8088</span><br></pre></td></tr></table></figure>
-<p>有时候远程服务器长时间没有操作会自动把你踢下来，配置一下自动重连和记忆功能，如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Host *</span><br><span class="line">    ControlMaster auto</span><br><span class="line">    ControlPath /tmp/ssh_connection_%h_%p_%r.sock</span><br><span class="line">    ServerAliveInterval 80</span><br><span class="line">    ServerAliveCountMax 6</span><br><span class="line">    ForwardAgent yes</span><br><span class="line">    CheckHostIP no</span><br><span class="line">    Compression yes</span><br><span class="line">    ControlPersist 72h</span><br><span class="line">    StrictHostKeyChecking=no</span><br><span class="line">    GSSAPIAuthentication=no</span><br></pre></td></tr></table></figure>
-
-<h1 id="zsh配置"><a href="#zsh配置" class="headerlink" title="zsh配置"></a>zsh配置</h1><ol>
-<li>安装<code>oh-my-zsh</code></li>
-<li>在<code>.zshrc</code>中修改字段<code>ZSH_THEME=&quot;pygmalion&quot;</code></li>
+<h1 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>并查集: 来自于——并(union)、查(find)、集(set)，是一种维护集合的数据结构。支持两种操作：</p>
+<ul>
+<li>查询操作<code>find()</code>: 判断两个元素是否在一个集合中。</li>
+<li>合并操作<code>union()</code>: 合并两个集合。</li>
+</ul>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>并查集维护的集合本质上是<strong>树形结构</strong>，使用数组方式实现的。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> pre[N];  <span class="comment">//pre[i]表示元素i的父节点的下标</span></span><br></pre></td></tr></table></figure>
+<p>以这种父亲关系来表示元素所属的集合，图示如下：<br><img src="/2017/02/28/union-find/1.jpg" alt="image.png"></p>
+<p>如果<code>pre[i] == i</code>,说明元素i为该集合的根节点，同时也是<strong>所属集合的标识</strong> 。</p>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>一开始的每个元素都是独立的集合。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    pre[i] = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="find操作"><a href="#find操作" class="headerlink" title="find操作"></a>find操作</h1><p>思路:<br>判断两个元素是否在同一个集合 ——&gt; 判断两个元素是否在一棵树上 ——&gt; 判断两个元素所在树的根节点是否相等。<br>接下来就是如何查找元素的集合的根节点的问题了，这个也很简单，反复寻找父节点直至<code>pre[i] == i</code>即可。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="union操作"><a href="#union操作" class="headerlink" title="union操作"></a>union操作</h1><p>合并元素a和元素b所在的集合。<br>思路：</p>
+<ol>
+<li>对于a和b两个元素，分别找到其根节点ra和rb。</li>
+<li>如果<code>ra == rb</code>，不做任何操作。</li>
+<li>否则，令<code>pre[ra] = rb</code>或者<code>pre[rb] = ra</code>。</li>
 </ol>
+<p><img src="/2017/02/28/union-find/2.jpg" alt="image.png"><br>代码描述：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">union</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ra = <span class="built_in">find</span>(a);</span><br><span class="line">    <span class="type">int</span> rb = <span class="built_in">find</span>(b);</span><br><span class="line">    <span class="keyword">if</span>(ra != rb) &#123;</span><br><span class="line">        pre[ra] = rb;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="路径压缩"><a href="#路径压缩" class="headerlink" title="路径压缩"></a>路径压缩</h1><p>上述查找函数是未经过优化的，在某种极端情况下效率很低。<br>比如：假设一个集合的元素的树形结构是一个链表。这样，当从叶子节点开始寻找根节点时，向上查询经过了集合里的每个节点，这样的效率太过低下。<br>因此，可以在找到根节点后，对此集合的元素做一次路径压缩。把经过路径上所有元素的父节点都指向根节点。如图所示：<br><img src="/2017/02/28/union-find/3.jpg" alt="image.png"></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> v = x;</span><br><span class="line">    <span class="comment">// 第一次遍历，找到根节点</span></span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];    </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 再遍历一次路径，进行路径压缩  </span></span><br><span class="line">    <span class="keyword">while</span>(pre[v] != v) &#123;</span><br><span class="line">        <span class="type">int</span> tmp = v;</span><br><span class="line">        v = pre[v];</span><br><span class="line">        pre[tmp] = x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>递归版的写法：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x == pre[x]) &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">int</span> F = find[pre[x]];</span><br><span class="line">        pre[x] = F;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
-        <category>系统配置相关</category>
+        <category>算法与刷题</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>正则表达式</title>
+    <url>/2017/02/06/regex/</url>
+    <content><![CDATA[<p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
+<span id="more"></span>
+<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
+<li><code>^</code>: 匹配字符串的开头</li>
+<li><code>$</code>: 匹配字符串的结尾</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
+
+<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
+<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
+<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
+
+<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
+<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
+<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
+</ul>
+<p>大写字母表示“非”，如：</p>
+<ul>
+<li><code>\D</code>: 匹配非数字</li>
+<li><code>\W</code>：匹配非单词字符</li>
+</ul>
+<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
+<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
+<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
+<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
+<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
+<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
+
+<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
+<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
+<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
+<li><code>.</code>：匹配单个的任意字符</li>
+<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
+<li><code>()</code>: 匹配子串</li>
+</ul>
+]]></content>
+      <categories>
+        <category>python</category>
       </categories>
   </entry>
   <entry>
@@ -466,216 +724,6 @@
 ]]></content>
       <categories>
         <category>算法与刷题</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>Python包的构建与分发——setup.py</title>
-    <url>/2021/10/09/python-setup/</url>
-    <content><![CDATA[<p>python项目或者Python与C++的混合项目中必然要用到setup.py来构建包，在这里总结以下它的使用方式。</p>
-<span id="more"></span>
-<h1 id="构建项目的命令"><a href="#构建项目的命令" class="headerlink" title="构建项目的命令"></a>构建项目的命令</h1><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 在本地构建模块，不安装</span></span><br><span class="line">python setup.py build</span><br><span class="line"><span class="comment"># 将项目安装到pip/conan环境中</span></span><br><span class="line">python setup.py install</span><br><span class="line"><span class="comment"># 安装项目的软链接到pip/conan环境中（适用于开发中的项目）</span></span><br><span class="line">python setup.py develop</span><br><span class="line"><span class="comment"># 在local目录构建whl包</span></span><br><span class="line">python setup.py bdist_wheel</span><br><span class="line"></span><br><span class="line"><span class="comment"># 等同于python setup.py install</span></span><br><span class="line">pip install .</span><br><span class="line"><span class="comment"># 等同于python setup.py develop, -e即editable</span></span><br><span class="line">pip install -e .</span><br></pre></td></tr></table></figure>
-<h1 id="Setuptools"><a href="#Setuptools" class="headerlink" title="Setuptools"></a>Setuptools</h1><p>distutils是python官方的打包工具，Setuptool是基于distutils的增强版本，目前都通过这个工具来打包。一般conda和pip的python虚拟环境都会带有Setuptools.<br><code>setup.py</code>其实就是setuptools的配置文件。需要完善其中的setup函数来完成打包，基本命令如下。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">from setuptools import setup</span><br><span class="line">setup()</span><br></pre></td></tr></table></figure>
-<h1 id="setup-py的参数配置"><a href="#setup-py的参数配置" class="headerlink" title="setup.py的参数配置"></a>setup.py的参数配置</h1><p>以一个实现加法功能的python和C++混合编程项目为例介绍setup.py的常见参数。</p>
-]]></content>
-      <categories>
-        <category>python</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>正则表达式</title>
-    <url>/2017/02/06/regex/</url>
-    <content><![CDATA[<p>平时在写爬虫时需要过滤数据的地方总是会用到正则表达式，学习web开发的时候做输入合法性验证也用到过这些，陆陆续续接触了很多规则，做个总结。</p>
-<span id="more"></span>
-<h1 id="定位匹配"><a href="#定位匹配" class="headerlink" title="定位匹配"></a>定位匹配</h1><ul>
-<li><code>^</code>: 匹配字符串的开头</li>
-<li><code>$</code>: 匹配字符串的结尾</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">^abc：表示匹配以abc开头的字符串</span><br><span class="line">abc$：匹配以abc结尾的字符串</span><br><span class="line">^abc$：只匹配abc (精确匹配)</span><br><span class="line">abc：匹配包含abc的字符串 (模糊匹配)</span><br></pre></td></tr></table></figure>
-
-<h1 id="自定义匹配字符规则"><a href="#自定义匹配字符规则" class="headerlink" title="自定义匹配字符规则"></a>自定义匹配字符规则</h1><ul>
-<li><code>[]</code>: 匹配括号中的任意一个字符，可以用<code>-</code>表示范围。</li>
-<li><code>[^]</code>: 匹配除了括号中字符以外的任意一个字符</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[abc] :匹配 &quot;a&quot; 或 &quot;b&quot; 或 &quot;c&quot;</span><br><span class="line">[a-z] :匹配a~z中任意一个字符</span><br><span class="line">[a-zA-Z0-9]: 匹配所有的字母或数字</span><br><span class="line">[^abc] :匹配 &quot;a&quot;,&quot;b&quot;,&quot;c&quot;之外的任意一个字符</span><br></pre></td></tr></table></figure>
-
-<h1 id="字符族匹配"><a href="#字符族匹配" class="headerlink" title="字符族匹配"></a>字符族匹配</h1><ul>
-<li><code>\d</code>: 匹配任意一个数字(0~9)</li>
-<li><code>\w</code>: 匹配一个单词字符(字母或者数字或者下划线)</li>
-</ul>
-<p>大写字母表示“非”，如：</p>
-<ul>
-<li><code>\D</code>: 匹配非数字</li>
-<li><code>\W</code>：匹配非单词字符</li>
-</ul>
-<h1 id="匹配次数"><a href="#匹配次数" class="headerlink" title="匹配次数"></a>匹配次数</h1><ul>
-<li><code>*</code>：匹配前一个规则的字符0次或者无限次（贪婪匹配）</li>
-<li><code>+</code>：匹配前一个规则的字符1次或者无限次（贪婪匹配）</li>
-<li><code>?</code>：匹配前一个规则的字符0次或者一次</li>
-<li><code>&#123;m&#125;</code>：匹配前一个规则的字符m次</li>
-<li><code>&#123;m,n&#125;</code>:匹配前一个规则的字符m次~n次</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">匹配合法的c变量名：[_a-zA-Z]+[\\w]*  (以下划线或者字母开头，后面可以加0或多个字符)</span><br><span class="line">匹配0~100之间的数字：[1-9]?\\d$&amp;#124;100  (十位数字可以出现0次或者1次，范围在1-9之间，个位数字必须出现一次)</span><br><span class="line">匹配163邮箱名（假设邮箱名长度为6~10):[\\w]&#123;6,10&#125;@163.com$</span><br></pre></td></tr></table></figure>
-
-<h1 id="贪婪匹配和非贪婪匹配"><a href="#贪婪匹配和非贪婪匹配" class="headerlink" title="贪婪匹配和非贪婪匹配"></a>贪婪匹配和非贪婪匹配</h1><h2 id="贪婪模式"><a href="#贪婪模式" class="headerlink" title="贪婪模式"></a>贪婪模式</h2><p>默认情况，与匹配次数有关的符号<code>? + * &#123;min, max&#125;</code>都是贪婪的，也就是说，它会根据前导字符去匹配尽可能多的内容。</p>
-<h2 id="非贪婪模式"><a href="#非贪婪模式" class="headerlink" title="非贪婪模式"></a>非贪婪模式</h2><p>在修饰匹配次数的特殊符号后再加上一个 “?” 号，则可以使匹配次数不定的表达式尽可能少的匹配，使可匹配可不匹配的表达式，尽可能的 “不匹配”。这种匹配原则叫作 “非贪婪” 模式，</p>
-<h1 id="其他规则"><a href="#其他规则" class="headerlink" title="其他规则"></a>其他规则</h1><ul>
-<li><code>.</code>：匹配单个的任意字符</li>
-<li><code>|</code>：左右表达式任意匹配一个，就近原则，先匹配左边规则</li>
-<li><code>()</code>: 匹配子串</li>
-</ul>
-]]></content>
-      <categories>
-        <category>python</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>算法笔记——并查集</title>
-    <url>/2017/02/28/union-find/</url>
-    <content><![CDATA[<p>刷题碰到这种问题不止一次了，总是写的磕磕绊绊。是时候总结一下了。</p>
-<span id="more"></span>
-<h1 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>并查集: 来自于——并(union)、查(find)、集(set)，是一种维护集合的数据结构。支持两种操作：</p>
-<ul>
-<li>查询操作<code>find()</code>: 判断两个元素是否在一个集合中。</li>
-<li>合并操作<code>union()</code>: 合并两个集合。</li>
-</ul>
-<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>并查集维护的集合本质上是<strong>树形结构</strong>，使用数组方式实现的。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> pre[N];  <span class="comment">//pre[i]表示元素i的父节点的下标</span></span><br></pre></td></tr></table></figure>
-<p>以这种父亲关系来表示元素所属的集合，图示如下：<br><img src="/2017/02/28/union-find/1.jpg" alt="image.png"></p>
-<p>如果<code>pre[i] == i</code>,说明元素i为该集合的根节点，同时也是<strong>所属集合的标识</strong> 。</p>
-<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>一开始的每个元素都是独立的集合。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    pre[i] = i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="find操作"><a href="#find操作" class="headerlink" title="find操作"></a>find操作</h1><p>思路:<br>判断两个元素是否在同一个集合 ——&gt; 判断两个元素是否在一棵树上 ——&gt; 判断两个元素所在树的根节点是否相等。<br>接下来就是如何查找元素的集合的根节点的问题了，这个也很简单，反复寻找父节点直至<code>pre[i] == i</code>即可。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="union操作"><a href="#union操作" class="headerlink" title="union操作"></a>union操作</h1><p>合并元素a和元素b所在的集合。<br>思路：</p>
-<ol>
-<li>对于a和b两个元素，分别找到其根节点ra和rb。</li>
-<li>如果<code>ra == rb</code>，不做任何操作。</li>
-<li>否则，令<code>pre[ra] = rb</code>或者<code>pre[rb] = ra</code>。</li>
-</ol>
-<p><img src="/2017/02/28/union-find/2.jpg" alt="image.png"><br>代码描述：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">union</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ra = <span class="built_in">find</span>(a);</span><br><span class="line">    <span class="type">int</span> rb = <span class="built_in">find</span>(b);</span><br><span class="line">    <span class="keyword">if</span>(ra != rb) &#123;</span><br><span class="line">        pre[ra] = rb;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="路径压缩"><a href="#路径压缩" class="headerlink" title="路径压缩"></a>路径压缩</h1><p>上述查找函数是未经过优化的，在某种极端情况下效率很低。<br>比如：假设一个集合的元素的树形结构是一个链表。这样，当从叶子节点开始寻找根节点时，向上查询经过了集合里的每个节点，这样的效率太过低下。<br>因此，可以在找到根节点后，对此集合的元素做一次路径压缩。把经过路径上所有元素的父节点都指向根节点。如图所示：<br><img src="/2017/02/28/union-find/3.jpg" alt="image.png"></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> v = x;</span><br><span class="line">    <span class="comment">// 第一次遍历，找到根节点</span></span><br><span class="line">    <span class="keyword">while</span>(pre[x] != x) &#123;</span><br><span class="line">        x = pre[x];    </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 再遍历一次路径，进行路径压缩  </span></span><br><span class="line">    <span class="keyword">while</span>(pre[v] != v) &#123;</span><br><span class="line">        <span class="type">int</span> tmp = v;</span><br><span class="line">        v = pre[v];</span><br><span class="line">        pre[tmp] = x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>递归版的写法：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">find</span><span class="params">(<span class="type">int</span> x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x == pre[x]) &#123;</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">int</span> F = find[pre[x]];</span><br><span class="line">        pre[x] = F;</span><br><span class="line">        <span class="keyword">return</span> F;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>算法与刷题</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>vim配置</title>
-    <url>/2021/05/31/vim/</url>
-    <content><![CDATA[<p>稍微调教一下vim</p>
-<span id="more"></span>
-<h1 id="基本配置"><a href="#基本配置" class="headerlink" title="基本配置"></a>基本配置</h1><p><a href="https://github.com/amix/vimrc">https://github.com/amix/vimrc</a><br>按照这个配置，微调字体和基本设置即可，具体如下：</p>
-<p>vi ~&#x2F;.vim_runtime&#x2F;vimrcs&#x2F;extended.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; colorscheme peaksea</span><br></pre></td></tr></table></figure>
-
-<p>vi .vim_runtime&#x2F;vimrcs&#x2F;basic.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&quot; set foldcolumn=1</span><br><span class="line">&quot; set ffs=unix,dos,mac</span><br></pre></td></tr></table></figure>
-
-<p>vi ~&#x2F;.vim_runtime&#x2F;my_configs.vim</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">set nu</span><br><span class="line">set cursorline &quot; 高亮当前行</span><br><span class="line">set cursorcolumn</span><br><span class="line">set colorcolumn=100</span><br><span class="line">highlight Cursorline cterm=None ctermbg=Black</span><br><span class="line">highlight Cursorcolumn cterm=None ctermbg=Black</span><br><span class="line">set list &quot; 默认空格是不显示的，此选项显示空格</span><br><span class="line">set listchars=tab:›\ ,trail:•,extends:#,nbsp:. &quot; 高亮尾部空格/制表符为:</span><br><span class="line"></span><br><span class="line">let g:snipMate = &#123; &#x27;snippet_version&#x27; : 1  &#125;</span><br></pre></td></tr></table></figure>
-<h1 id="支持的插件"><a href="#支持的插件" class="headerlink" title="支持的插件"></a>支持的插件</h1><p>(更新中，理解了一个就更新一个)</p>
-<h2 id="ctrlp"><a href="#ctrlp" class="headerlink" title="ctrlp"></a>ctrlp</h2><p>模糊搜索插件，已经mapping到了快捷键<code>ctrl + F</code></p>
-<h2 id="nerdtree"><a href="#nerdtree" class="headerlink" title="nerdtree"></a>nerdtree</h2>]]></content>
-      <categories>
-        <category>系统配置相关</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>浮点数在计算机中的表示</title>
-    <url>/2021/09/07/float/</url>
-    <content><![CDATA[<p>计算机中，小数的表示方法一般是用浮点数表达法来表示的。</p>
-<span id="more"></span>
-<p>浮点数表达法采用了科学计数法来表达实数，以510.375为例，科学计数法可以表示成以下几种形式，可以看到不同的表示形式其小数点的位置是漂浮不定的，也即浮点数名称的由来。</p>
-<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">5.10375 * 10 ^ 2</span><br><span class="line">51.0375 * 10 ^ 1</span><br><span class="line">510.375 * 10 ^ 0</span><br><span class="line">5103.75 * 10 ^ -1</span><br><span class="line">51037.5 * 10 ^ -2</span><br></pre></td></tr></table></figure>
-<p>由以上例子可以看出要表示一个浮点数，需要以下几个部分：</p>
-<table>
-<thead>
-<tr>
-<th>符号位S</th>
-<th>尾数M</th>
-<th>基数N</th>
-<th>指数E</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0</td>
-<td>5.10325</td>
-<td>10</td>
-<td>2</td>
-</tr>
-</tbody></table>
-<h1 id="IEEE-754规范"><a href="#IEEE-754规范" class="headerlink" title="IEEE 754规范"></a>IEEE 754规范</h1><p>上述例子可以看出浮点数有很多种写法，现代计算机中的浮点数的表示规范都是遵循<strong>IEEE 754</strong>标准的，其规定了底数N为2，所有的浮点数由一个三元组表示：$$V(S,M,E) &#x3D; (-1)^S * M * 2^E$$<br>在计算机中的表示如下图：<br><img src="float1.png" width="80%" height="80%"></p>
-<p>其中：</p>
-<ul>
-<li>S：用一个bit表示，0表示为正数，1表示为负数</li>
-<li>E: 规定这里保存的是阶码的<strong>移码</strong></li>
-<li>M: 规定M的有效值范围为<code>[1,2)</code>之间，也就是说尾数形式默认为<code>1.xyz</code>，为了节约空间，省略小数点前的1，所以尾数实际表达的二进制范围是<code>f+1</code>个bit。</li>
-</ul>
-<blockquote>
-<p>TODO:规格化和非规格化浮点数</p>
-</blockquote>
-<h1 id="FP32-x2F-FP16-x2F-BF16-x2F-TF32的表示规则"><a href="#FP32-x2F-FP16-x2F-BF16-x2F-TF32的表示规则" class="headerlink" title="FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则"></a>FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则</h1><img src="float2.png" width="80%" height="80%">
-（to be continued....)
-]]></content>
-      <categories>
-        <category>计算机体系结构</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>《CUDA C Programing Guide》读书笔记1——整体介绍</title>
-    <url>/2022/10/23/cuda-guide-1/</url>
-    <content><![CDATA[<p>从事异构计算领域三年时间，却没有系统的读过GPU相关的基础文档和书籍，以至于基础不牢，很多东西写了又忘，《CUDA C Programing Guide》是NV官方提供的CUDA指导文档，从头复习一遍，边读边翻译，记录一下。</p>
-<span id="more"></span>
-<h1 id="1-1-使用GPU的好处"><a href="#1-1-使用GPU的好处" class="headerlink" title="1.1 使用GPU的好处"></a>1.1 使用GPU的好处</h1><p>GPU在同等价格和功耗条件下提供了比CPU高得多的<strong>指令吞吐量(Instruction throughtput)</strong> 和 <strong>内存带宽(memory bandwidth)</strong> 。得益于此，应用可以在GPU上运行的比CPU更快。其他计算设备如FPGA，尽管能效也很好，但是编程灵活性远低于GPU。<br>GPU和CPU的能力差异是因为它们的设计目标不同。CPU的设计是为了尽可能快的执行一系列操作（每个操作的单位是线程），并且允许并行的执行几十个这样的线程。而GPU的设计是擅长执行数千个这样的线程。（为了更大的吞吐量，代价是单个线程的性能会慢些）。<br>GPU是专门用于高度并行的计算任务的。因此在 <font color="red">设计时有更多的晶体管被用于数据计算(data processing)而不是数据缓存(data caching)和控制流(flow control)</font>。图1是CPU和GPU的芯片资源分布示意图。<br><img src="figure1.png" width="50%" height="50%"><br>将更多的晶体管用于数据计算过程（如浮点计算）有益于高度并行计算。GPU可以通过计算隐藏内存访问延迟，而不是依靠大量数据缓存和复杂流程控制来避免内存访问延迟。（数据缓存和流控制设计都需要大量的晶体管来实现，成本昂贵）<br>通常，一个应用程序既有可以并行的部分，也有需要串行执行的部分，因此系统在设计时混用CPU和GPU可以最大化发挥整体性能。具有高度并行性的应用程序可以利用GPU这种并行特性来获得比CPU上运行时更高的性能。</p>
-<h1 id="1-2-CUDA：通用的并行计算平台和编程模型"><a href="#1-2-CUDA：通用的并行计算平台和编程模型" class="headerlink" title="1.2 CUDA：通用的并行计算平台和编程模型"></a>1.2 CUDA：通用的并行计算平台和编程模型</h1><p>2006年11月，NVIDIA推出了通用的并行计算平台和编程模型 CUDA。它可以利用NVIDIA GPU中的并行计算引擎，比CPU更高效的方式来解决许多复杂的计算问题。<br>CUDA提供了一个软件环境，允许开发人员使用C++编写程序。同时也支持Fortran、DirectCompute、OpenACC等其他的编程方式。<br><img src="figure2.png" width="50%" height="50%"></p>
-<h1 id="1-3-可扩展的编程模型"><a href="#1-3-可扩展的编程模型" class="headerlink" title="1.3 可扩展的编程模型"></a>1.3 可扩展的编程模型</h1><p>多核CPU (multicore CPUs) 和多核GPU(manycore GPUs)的出现意味着现在主流处理器芯片都是并行系统。这带来了一个挑战是如何像写普通程序一样的编写并行程序，无感的扩展其并行性，使其能利用更多的处理器核，就像3D图形程序那样。<br>CUDA编程模型旨在克服这一挑战，同时也能给熟悉C这样的标准编程语言的程序员较低的学习曲线。<br>它向程序员提供了一组最小的语言扩展，核心是三个关键抽象：<strong>线程组的层次结构、共享内存和屏障同步(barrier synchronization)</strong> 。<br>这些抽象提供了粗粒度的数据并行和任务并行和细粒度的数据并行和线程并行。它指导程序员将问题分解为一些可以被线程块(blocks of threads)独立执行和并行执行的子问题，每个子问题可以进一步分解为由块内的所有线程协同并行解决的更细的部分。</p>
-<blockquote>
-<p>my notes：注意这两个粒度划分的思想。不同的线程块独立且并行的执行，而线程块内部的线程间可以并行执行也可以协作完成一个子问题。</p>
-</blockquote>
-<p>这种问题分解的思路即保证了代码的可读性 （允许block内的线程协作完成一个子任务），同时也实现了并行的自动伸缩性（线程块独立并行执行子任务）。事实上，每个线程块可以以任何顺序（无论是并行的还是串行的）被调度在GPU内的任意可用的多处理器(multiprocessor)上。因此编译后的CUDA程序可以在任何数量的多处理器上执行（如图3所示），只有运行时系统需要知道物理的多处理器的数量。<br><img src="figure3.png" width="50%" height="50%"></p>
-<blockquote>
-<p>notes:  GPU是围绕着一组流式多处理器（SM）阵列建立的（更多细节见Chapter.4 硬件实现）。一个多线程程序被划分为独立执行的线程块，因此，拥有更多multiprocessor的GPU执行程序的时间比拥有较少multiprocessors的GPU要短。</p>
-</blockquote>
-<blockquote>
-<p>my notes: 关于Automatic Scalability还要再理解一下</p>
-</blockquote>
-<p>这种可扩展的编程模型通过简单的扩展multiprocessor和memory partitions的数量，可以覆盖广阔的市场范围：从高性能计算GeForce GPU、专业Quadro和Tesla计算产品 到 各种便宜的主流GeForce GPU（参见支持CUDA的GPU列表）。</p>
-]]></content>
-      <categories>
-        <category>CUDA</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>《CUDA C Programing Guide》读书笔记2——编程模型</title>
-    <url>/2022/10/24/cuda-guide-2/</url>
-    <content><![CDATA[<p><a href="https://chenchu-zs.github.io/2022/10/23/cuda-guide-1/">《CUDA C Programing Guide》读书笔记1——整体介绍</a></p>
-<span id="more"></span>
-<p>本章介绍CUDA编程模型背后的主要概念，主要阐述这些概念是怎么在C++中的表现的。关于CUDA C++的扩展描述在下一章。<br>本章使用vectorAdd作为示例，详细代码在<a href="https://github.com/nvidia/cuda-samples">cudaSample</a>中。</p>
-<h1 id="2-1-核函数-Kernels"><a href="#2-1-核函数-Kernels" class="headerlink" title="2.1 核函数 (Kernels)"></a>2.1 核函数 (Kernels)</h1><p>CUDA C++扩展了C++，允许程序员定义C++函数作为kernel。当kernel被调用时，由N个不同的CUDA线程并行执行N次，而不是像普通C++函数那样只执行一次。<br>kernel 是用<code>__global__</code>修饰符定义的，执行这个kernel的CUDA线程数量是通过<code>&lt;&lt;&lt;...&gt;&gt;&gt;</code>来配置的，kernel中每个线程都有唯一的线程ID，可以通过内置变量访问。<br>以下示例代码使用内置变量threadIdx，把size为N的两个向量A和B相加，并将结果保存到向量C中：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">VecAdd</span><span class="params">(<span class="type">float</span>* A, <span class="type">float</span>* B, <span class="type">float</span>* C)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = threadIdx.x;</span><br><span class="line">    C[i] = A[i] + B[i];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation with N threads</span></span><br><span class="line">    VecAdd&lt;&lt;&lt;<span class="number">1</span>, N&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这段代码中，执行VecAdd()的N个线程中的每个线程都进行了对应的加法运算。</p>
-<h1 id="2-2-线程层次结构（Thread-Hierarchy）"><a href="#2-2-线程层次结构（Thread-Hierarchy）" class="headerlink" title="2.2 线程层次结构（Thread Hierarchy）"></a>2.2 线程层次结构（Thread Hierarchy）</h1><p>便于理解起见，<code>threadIdx</code>被看做一个三维向量。可以使用一维、二维或三维的 <em>线程索引(thread index)</em> 来表示一维、二维或三维的 <em>线程块(thread block)</em> 。这提供了一种自然的方式来调用一个域中的元素的计算，如向量计算(1D)、矩阵计算(2D)或体积计算(3D)。<br>一个线程的索引和它的线程ID以一种直接的方式相互关联。对于一维块，它们是相同的；对于尺寸为$(D_x, D_y)$的二维块，索引为<code>(x, y)</code>的线程ID是$(x + y * D_x)$；对于尺寸为$(D_x, D_y, D_z)$的三维块，索引为<code>(x, y, z)</code>的线程的ID是$(x + y * D_x + z * D_x * D_y)$ 。<br>以下代码展示了将两个大小为<code>NxN</code>的矩阵A和B相加，并将结果保存到矩阵C中的示例：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">MatAdd</span><span class="params">(<span class="type">float</span> A[N][N], <span class="type">float</span> B[N][N], <span class="type">float</span> C[N][N])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> j = threadIdx.y;</span><br><span class="line">    C[i][j] = A[i][j] + B[i][j];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation with one block of N * N * 1 threads</span></span><br><span class="line">    <span class="type">int</span> numBlocks = <span class="number">1</span>;</span><br><span class="line">    <span class="function">dim3 <span class="title">threadsPerBlock</span><span class="params">(N, N)</span></span>;</span><br><span class="line">    MatAdd&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>每个线程块的线程数是有限制的。因为<font color="red">一个块的所有线程都应该驻留在同一个SM Core（streaming multiprocessor core）上</font>，并且必须共享该核的有限内存资源。在现有的GPU上，一个线程块最多可包含1024个线程。<br>一个kernel可以由多个形状相同的线程块来执行，因此，总的线程数等于每个块的线程数乘以块数。<br>线程块(block)被组织成一维、二维或者三维的网格(grid)，如图4所示。网格中的线程块的数量通常是由被处理的数据大小(通常超过了系统中的处理器数量)决定的。<br><img src="figure4.png" width="50%" height="50%"><br>每个block的线程数和每个grid的block数量在 &lt;&lt;&lt;…&gt;&gt;语法可以是int或dim3类型。<br>grid中的每个block可以通过一个一维、二维或三维的唯一索引来识别。在kernel中可以通过内置的<code>blockIdx</code>变量访问。block的尺寸可以在kernel中通过内置的 <code>blockDim</code>变量访问。<br>将之前的<code>Matadd()</code>示例扩展为处理多个block的，代码如下：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Kernel definition</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">MatAdd</span><span class="params">(<span class="type">float</span> A[N][N], <span class="type">float</span> B[N][N], <span class="type">float</span> C[N][N])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> i = blockIdx.x * blockDim.x + threadIdx.x;</span><br><span class="line">    <span class="type">int</span> j = blockIdx.y * blockDim.y + threadIdx.y;</span><br><span class="line">    <span class="keyword">if</span> (i &lt; N &amp;&amp; j &lt; N)</span><br><span class="line">    C[i][j] = A[i][j] + B[i][j];</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Kernel invocation</span></span><br><span class="line">    <span class="function">dim3 <span class="title">threadsPerBlock</span><span class="params">(<span class="number">16</span>, <span class="number">16</span>)</span></span>;</span><br><span class="line">    <span class="function">dim3 <span class="title">numBlocks</span><span class="params">(N / threadsPerBlock.x, N / threadsPerBlock.y)</span></span>;</span><br><span class="line">    MatAdd&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;(A, B, C);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>16x16的线程块大小（256个线程）是一种常见的选择（尽管在当前示例中是任意的）。Grid要包含足够数量的block，以便像之前示例一样让矩阵中的每个元素都有一个thread来处理，为简单起见，此示例假设每个维度中每个grid的线程数可以被该维度中每个block的线程数平均整除，尽管一般情况不一定如此。<br><strong>线程块需要独立执行</strong> ，必须能够以任何顺序(并行或串行)执行它们。这种独立性允许线程块以任意顺序被调度到任意数量的物理core上。因此程序员能够编写随核数量扩展的代码。<br>block内的线程可以通过共享内存来共享数据，并通过同步来协调内存访问，从而实现block内的线程协作。更准确地说，可以通过在kernel中调用<code>__syncthreads()</code>来指定同步点。<code>__syncthreads()</code>作为一个屏障（barrier)，block内的所有线程必须在这个屏障等待，然后才允许任何线程继续进行。3.2.4节给出了一个使用共享内存的例子。除了<code>__syncthreads()</code>外，扩展章节“Cooperative Groups API”提供了一套丰富的线程同步的原语。<br>为了高效协作，共享内存应该是靠近处理器核的低延迟内存（很像L1 cache），并且<code>__syncthreads()</code>应该是轻量级的。</p>
-<h2 id="2-2-1-Thread-Block-Clusters"><a href="#2-2-1-Thread-Block-Clusters" class="headerlink" title="2.2.1 Thread Block Clusters"></a>2.2.1 Thread Block Clusters</h2><p>随着NVIDIA Compute Capability 9.0的推出，CUDA编程模型引入了一个可选的层次结构级别，即线程块集群。线程块集群由线程块组成。和block内线程必须被调度在同一个SM上相似，cluster内的block也必须被调度在同一个GPU Processing Cluster (GPC)上。</p>
-<blockquote>
-<p>需要学习一下GPC的硬件组织</p>
-</blockquote>
-<p>和block相似，cluster也可以组织成一维、二维或者三维的形式，如图5所示。一个cluster内的block数量可以由用户定义，用户定义的这个值不超过8，这是CUDA支持的最大portable的size。超过8的是特定的架构，可以使用<code>cudaOccupancyMaxPotentialClusterSize</code> API进行查询。<br><img src="figure5.png" width="50%" height="50%"></p>
-<blockquote>
-<p>在使用cluster特性启动的kernel中，<code>grid size</code>仍然表示<code>grid</code>中<code>block</code>的数量，为了兼容性。The rank of a block in a cluster可以用<code>Cluster Group</code> API来查找。</p>
-</blockquote>
-<p>在kernel中启用cluster特性有两种方式：使用<code>__cluster_dims__(X,Y,Z)</code>修饰kernel，或者使用CUDA的kernel启动API<code>cudaLaunchKernelEx</code>。<br>以下例子展示如何使用编译期修饰符启动一个支持cluster特性的kernel。使用这种方式启动的kernel, <code>cluster size</code>将在编译期固定，其他和普通使用<code>&lt;&lt;&lt;&gt;&gt;&gt;</code>启动的kernel没有区别。</p>
-<h1 id="2-3-存储层次-Memory-Hierarchy"><a href="#2-3-存储层次-Memory-Hierarchy" class="headerlink" title="2.3 存储层次 (Memory Hierarchy)"></a>2.3 存储层次 (Memory Hierarchy)</h1>]]></content>
-      <categories>
-        <category>CUDA</category>
       </categories>
   </entry>
 </search>

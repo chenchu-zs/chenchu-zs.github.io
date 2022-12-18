@@ -30,7 +30,7 @@
 <meta property="og:image" content="http://example.com/2021/09/07/float/float1.png">
 <meta property="og:image" content="http://example.com/2021/09/07/float/float2.png">
 <meta property="article:published_time" content="2021-09-07T08:36:47.000Z">
-<meta property="article:modified_time" content="2022-10-23T08:46:45.948Z">
+<meta property="article:modified_time" content="2022-12-18T12:25:44.294Z">
 <meta property="article:author" content="Zhang Shu">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2021/09/07/float/float1.png">
@@ -150,7 +150,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#IEEE-754%E8%A7%84%E8%8C%83"><span class="nav-number">1.</span> <span class="nav-text">IEEE 754规范</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#FP32-x2F-FP16-x2F-BF16-x2F-TF32%E7%9A%84%E8%A1%A8%E7%A4%BA%E8%A7%84%E5%88%99"><span class="nav-number">2.</span> <span class="nav-text">FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#IEEE-754%E8%A7%84%E8%8C%83"><span class="nav-number">1.</span> <span class="nav-text">IEEE 754规范</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#FP32-x2F-FP16-x2F-BF16-x2F-TF32%E7%9A%84%E8%A1%A8%E7%A4%BA%E8%A7%84%E5%88%99"><span class="nav-number">2.</span> <span class="nav-text">FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B5%AE%E7%82%B9%E7%B2%BE%E5%BA%A6%E9%97%AE%E9%A2%98"><span class="nav-number">3.</span> <span class="nav-text">浮点精度问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E6%95%B0%E5%90%83%E5%B0%8F%E6%95%B0"><span class="nav-number">3.1.</span> <span class="nav-text">大数吃小数</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -165,7 +165,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-count">17</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -251,7 +251,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-10-23 16:46:45" itemprop="dateModified" datetime="2022-10-23T16:46:45+08:00">2022-10-23</time>
+      <time title="修改时间：2022-12-18 20:25:44" itemprop="dateModified" datetime="2022-12-18T20:25:44+08:00">2022-12-18</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -270,7 +270,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>545</span>
+      <span>1.3k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -320,7 +320,18 @@
 <p>TODO:规格化和非规格化浮点数</p>
 </blockquote>
 <h1 id="FP32-x2F-FP16-x2F-BF16-x2F-TF32的表示规则"><a href="#FP32-x2F-FP16-x2F-BF16-x2F-TF32的表示规则" class="headerlink" title="FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则"></a>FP32&#x2F;FP16&#x2F;BF16&#x2F;TF32的表示规则</h1><img src="float2.png" width="80%" height="80%">
-（to be continued....)
+
+<blockquote>
+<p>以1.0f为例，来介绍float在计算机中的表示<br>0 01111111 00000000000000000000000<br><strong>一个fp16到fp32的转换</strong><br>1 01110111 10001001110000000000000<br>1 00111 1000100111</p>
+</blockquote>
+<h1 id="浮点精度问题"><a href="#浮点精度问题" class="headerlink" title="浮点精度问题"></a>浮点精度问题</h1><p>浮点数计算在一些情形下不满足结合律：<br><code>(a + b) + (c + d) != (a + c) + (b + d)</code><br>gcc某个快速近似计算会导致 <code>a * b != b * a</code></p>
+<h2 id="大数吃小数"><a href="#大数吃小数" class="headerlink" title="大数吃小数"></a>大数吃小数</h2><p>这个问题和浮点数的表示方式有些关系。以FP32为例，已知FP32的尾数是23位，那么尾数的最大表示范围就是2 ^ 23 &#x3D; 8388608，一共7位，这意味着float类型最多能有7位有效数字，但是能绝对能保证的为6位，也即float的精度为6<del>7位。（平时讲有效数字是6</del>7位 ，指10进制。）</p>
+<p>我们用两个float相加，设有a&#x3D;123456;b&#x3D;2.189；a+b应该是123458.189但是由于float的精度只有小数点后6-7位，所以必然得不到123458.189，后面的89可能会截掉，8不一定，9是必然会截掉的。好的，才做一个加法就产生至少了0.009的误差，做1000个这样的加法，误差就是9了，这显然不是我们想要的。</p>
+<blockquote>
+<p>Kahan’s Summation Formula可以用来解决大数吃小数的问题<br><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/kahan-summation-algorithm/">https://www.geeksforgeeks.org/kahan-summation-algorithm/</a></p>
+</blockquote>
+<p>kahan求和算法是这样做的：sum&#x3D;a+b（不准确）; temp&#x3D; (a+b)-a-b;temp等于多少呢，初看这不就是0吗？不是的，计算机此时算的可不是0，而是等于-0.009，就是被截断的那个小数。通过一个临时变量我们就记住了这个误差，当计算下一个加法的时候，可以把这个误差补上，并且更新误差到sum。</p>
+<p>（to be continued….)</p>
 
     </div>
 
@@ -373,13 +384,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">30k</span>
+    <span title="站点总字数">32k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">27 分钟</span>
+    <span title="站点阅读时长">29 分钟</span>
   </span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
